@@ -51,29 +51,34 @@ button.small {
 }
 .label {
 	font-size: 18px;
-	width: 100px;
+	
+	float: left;
 }
 .inputcontainer {
 	margin-top: 150px;
-	text-align: left;
+	text-align: right;
 }
 .input{
 	margin: 20px 15px;
+	
+	float: left;
 }
 #protocol {
 	width: 110px;
+	float: left;
 	
 	font-size: 14px;
 	font-weight: bold;
 }
 #endpoint {
-	float: right;
+	/*float: right;*/
 }
 .submit {
-	margin-top: 40px;
+	/*margin-top: 40px;*/
 }
 .submit button {
-	float: right;
+	/*float: right;*/
+	margin-top: 110px;
 }
 
 .ui-menu {
@@ -155,11 +160,12 @@ button.small {
 .method > .pair,
 .parameter > .pair {
 	margin: 2px;
+	text-align: right;
 }
-.field > .pair >.val,
-.method > .pair >.val,
-.parameter > .pair > .val {
-	float: right;
+.field > .pair >.key,
+.method > .pair >.key,
+.parameter > .pair > .key {
+	float: left;
 }
 
 
