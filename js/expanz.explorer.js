@@ -39,12 +39,13 @@ function ListAvailableSites( fields ){
 
       var endpoint = $('#endpoint').val();
 
-      $('#container').html('<div id=\'error\'></div>');
+      var treeBase = new ExplorerTree( $('#container') );
+      treeBase.jQobj().html('<div id=\'error\'></div>');
       
       var url = fields['chosenURLProtocol']() + endpoint;
       var channel = SendGetRequest( url );
       channel( 'ListAvailableSites',
-               parseListAvailableSitesResponse( ListActivitiesForSite( channel ), $('#container'), error ),
+               parseListAvailableSitesResponse( ListActivitiesForSite( channel ), treeBase, error ),
 	       error
                );
       return false;
@@ -52,40 +53,38 @@ function ListAvailableSites( fields ){
 }
 
 function ListActivitiesForSite( channel ){
-   return function apply( siteName, jQObj ){
+   return function apply( appsite ){
 
-      channel(   'ListActivitiesForSite?site=' + siteName,
-         	     parseListActivitiesForSiteResponse( GetSchemaForActivity(channel, siteName), jQObj, error ),
+      channel(   'ListActivitiesForSite?site=' + appsite.id,
+         	     parseListActivitiesForSiteResponse( GetSchemaForActivity(channel, appsite), appsite, error ),
 		     error
          	     );
    }
 }
 
-function GetSchemaForActivity( channel, site ){
-   return function apply( activity, jQObj ){
+function GetSchemaForActivity( channel, appsite ){
+   return function apply( activity ){
 
-      channel(   'GetSchemaForActivity?site=' + site + '&activity=' + activity,
-         	  parseGetSchemaForActivityResponse( jQObj, error ),
+      channel(   'GetSchemaForActivity?site=' + appsite.id + '&activity=' + activity.id,
+         	  parseGetSchemaForActivityResponse( activity, error ),
 		  error
          	  );
    }
 }
 
 
-function parseListAvailableSitesResponse( nextLink, jQObj ){
+function parseListAvailableSitesResponse( nextLink, mother ){
 	return function apply( xml ){
 
-            var cxml = xml.replace(/&lt;/g, "<").replace(/&gt;/g, ">");
-
-            var appSites = $(cxml).find("AppSites");
+            var appSites = $(xml).find("AppSites");
 	    if( appSites ){
                $(appSites).find('AppSite').each( function(){
-                  jQObj.append(  '<div class=\'appsite\' id=\'' + $(this).attr('id') + '\'>' +
-                                 '\t<span class=\'name\'>Application Site: ' + $(this).attr('name') + '</span>' +
-                                 '</div>'
-                                 );
-                  // is authenticationMode $(this).attr('authenticationMode') necessary?
-                  eval( nextLink )( $(this).attr('id'), $('#' + $(this).attr('id') + '.appsite') );
+                  var appsite = new AppSite( $(this).attr('id'),
+                                             $(this).attr('name'),
+                                             $(this).attr('authenticationMode')
+                                             );
+                  mother.append( appsite );
+                  eval( nextLink )( appsite );
                });
 	    }
             else{
@@ -94,24 +93,19 @@ function parseListAvailableSitesResponse( nextLink, jQObj ){
       }
 }
 
-function parseListActivitiesForSiteResponse( nextLink, jQObj ){
+function parseListActivitiesForSiteResponse( nextLink, mother ){
 	return function apply( xml ){
 
-            var cxml = xml.replace(/&lt;/g, "<").replace(/&gt;/g, ">");
-
-            var activities = $(cxml).find("Activities");
+            var activities = $(xml).find("Activities");
 	    if( activities ){
                $(activities).find('Activity').each( function(){
 
                   if( $(this).attr('name') || $(this).attr('id') ) {
-                     var cssId = $(this).attr('id').replace(/\./g, '_'); 
-
-                     jQObj.append(  '<div class=\'activity\' id=\'' + cssId + '\'>' +
-                                    '\t<span class=\'name\'>Activity: ' + $(this).attr('name') + '</span>' +
-                                    '\t<span class=\'id\'>' + $(this).attr('id') + '</span>' +
-                                    '</div>'
-                                    );
-                     eval( nextLink )( $(this).attr('id'), jQObj.find('#' + cssId + '.activity') );
+                     var activity = new Activity(  $(this).attr('id'),
+                                                   $(this).attr('name')
+                                                   );
+                     mother.append( activity );
+                     eval( nextLink )( activity );
                   }
                });
 	    }
@@ -121,72 +115,47 @@ function parseListActivitiesForSiteResponse( nextLink, jQObj ){
       }
 }
 
-function generateFieldMarkup( key, value ){
-
-   return   '\t\t\t<div class=\'pair\'>' +
-            '<span class=\'name key\'>' + key + '</span>' +
-            '<span class=\'name val\'>' + value + '</span>' +
-            '</div>';
-}
 
 
-function parseGetSchemaForActivityResponse( jQObj ){
+function parseGetSchemaForActivityResponse( mother ){
 	return function apply( xml ){
 
-            var cxml = xml.replace(/&lt;/g, "<").replace(/&gt;/g, ">");
-
-            var activity = $(cxml).find("Activity");
+            var activity = $(xml).find("Activity");
 	    if( activity ){
 
-               jQObj.toggle(  function(){ $(this).find('.field,.method').show(); },
-                              function(){ $(this).find('.field,.method').hide(); }
-                              );
+               mother.jQobj().toggle(  function(){ $(this).find('.field,.method').show(); },
+                                       function(){ $(this).find('.field,.method').hide(); }
+                                       );
 
                // NOTE: Activity has a bunch of extra fields here. $(activity).find('Activity').attr(...)
 
                $(activity).find('Field').each( function(){
-                  jQObj.append(  '<div class=\'field\' id=\'' + $(this).attr('name') + '\'>' +
-                                 '<span class=\'title\'>Field</span>' +
-                                 '</div>' );
-                  
-                  var jQFieldObj = jQObj.find('#' + $(this).attr('name') + '.field' );
-                  jQFieldObj.css('display', 'none');
-                  
-                  if( $(this).attr('name') ) jQFieldObj.append(  generateFieldMarkup( 'Name', $(this).attr('name') ) );
-                  if( $(this).attr('label') ) jQFieldObj.append( generateFieldMarkup( 'Label', $(this).attr('label') ) );
-                  if( $(this).attr('class') ) jQFieldObj.append( generateFieldMarkup( 'Class', $(this).attr('class') ) );
-                  if( $(this).attr('colName') ) jQFieldObj.append(  generateFieldMarkup( 'ColumnName', $(this).attr('colName') ) );
-                  if( $(this).attr('datatype') ) jQFieldObj.append( generateFieldMarkup( 'Datatype', $(this).attr('datatype') ) );
-                  if( $(this).attr('value') ) jQFieldObj.append( generateFieldMarkup( 'Value', $(this).attr('value') ) );
-                  if( $(this).attr('disabled') ) jQFieldObj.append( generateFieldMarkup( 'Disabled?', $(this).attr('disabled') ) );
-                  if( $(this).attr('null') ) jQFieldObj.append(  generateFieldMarkup( 'Null Value', $(this).attr('null') ) );
-                  if( $(this).attr('valid') ) jQFieldObj.append( generateFieldMarkup( 'Valid', $(this).attr('valid') ) );
-
+                  var field = new Field(  $(this).attr('name'),
+                                          $(this).attr('label') ?    $(this).attr('label') :    '',
+                                          $(this).attr('class') ?    $(this).attr('class') :    '',
+                                          $(this).attr('colName') ?  $(this).attr('colName') :  '',
+                                          $(this).attr('datatype') ? $(this).attr('datatype') : '',
+                                          $(this).attr('value') ?    $(this).attr('value') :    '',
+                                          $(this).attr('disabled') ? $(this).attr('disabled') : '',
+                                          $(this).attr('null') ?     $(this).attr('null') :     '',
+                                          $(this).attr('valid') ?    $(this).attr('valid') :    ''
+                                          );
+                  mother.append( field );
                });
 
                $(activity).find('Method').each( function(){
-                  jQObj.append(  '<div class=\'method\' id=\'' + $(this).attr('name') + '\'>' +
-                                 '<span class=\'title\'>Method</span>' +
-                                 '</div>' );
-
-                  var jQMethodObj = jQObj.find('#' + $(this).attr('name') + '.method' );
-                  jQMethodObj.css('display', 'none');
-
-                  if( $(this).attr('name') ) jQMethodObj.append(  generateFieldMarkup( 'Name', $(this).attr('name') ) );
-                  if( $(this).attr('label') ) jQMethodObj.append( generateFieldMarkup( 'Description', $(this).attr('description') ) );
-                  if( $(this).attr('class') ) jQMethodObj.append( generateFieldMarkup( 'Returns', $(this).attr('returns') ) );
-                  if( $(this).attr('colName') ) jQMethodObj.append(  generateFieldMarkup( 'Is Data Publication?', $(this).attr('isDataPublication') ) );
+                  var method = new Method(   $(this).attr('name'),
+                                             $(this).attr('description') ?    $(this).attr('description') :    '',
+                                             $(this).attr('returns') ?    $(this).attr('returns') :    '',
+                                             $(this).attr('isDataPublication') ?    $(this).attr('isDataPublication') :    ''
+                                             );
+                  mother.append( method );
 
                   $(this).find('Parameter').each( function(){
-
-                     jQMethodObj.append(  '<div class=\'method\' id=\'' + $(this).attr('name') + '\'>' +
-                                          '<span class=\'title\'>Parameter</span>' +
-                                          '</div>' );
-
-                     var jQParameterObj = jQObj.find('#' + $(this).attr('name') + '.parameter' );
-
-                     if( $(this).attr('name') ) jQParameterObj.append(  generateFieldMarkup( 'Name', $(this).attr('name') ) );
-                     if( $(this).attr('label') ) jQParameterObj.append( generateFieldMarkup( 'Datatype', $(this).attr('datatype') ) );
+                     var parameter = new Parameter(   $(this).attr('name'),
+                                                      $(this).attr('datatype') ? $(this).attr('datatype') : ''
+                                                      );
+                     method.append( parameter );
                   });
 
                });
@@ -221,7 +190,8 @@ function SendGetRequest( url ){
             } else {
 	       var response = HTTPrequest.responseText;
 	          if( responseHandler ){
-		     eval( responseHandler )( response );
+                     var xml = response.replace(/&lt;/g, "<").replace(/&gt;/g, ">");
+		     eval( responseHandler )( xml );
 		  } 
 	    }
 	 }
@@ -231,4 +201,203 @@ function SendGetRequest( url ){
 }
 
 
+
+
+
+
+function ExplorerTree( jQobj ) {
+   this.rootJQObj = jQobj;
+   this.jQobj = function(){ return this.rootJQObj; }
+
+   this.children = [];
+   this.append = function( appsite ){
+                        appsite.mother = this;
+                        this.children.push( appsite );
+                        this.jQobj().append( appsite.html() );
+                        };
+   this.getChild = function( id ){
+      for( i=0; i < this.children.length; i++ )
+         if( this.children[i].id == id )
+            return this.children[i];
+   };
+   this.getAll = function(){ return this.children; };
+}
+
+function AppSite( id, name, authenticationMode ) {
+   this.id = id;
+   this.name = name;
+   this.authenticationMode = authenticationMode;
+
+   this.children = [];
+   this.append = function( activity ){
+                        activity.mother = this;
+                        this.children.push( activity );
+                        this.jQobj().append( activity.html() );
+                        };
+   this.getChild = function( id ){
+      for( i=0; i < this.children.length; i++ )
+         if( this.children[i].cssId == id )
+            return this.children[i];
+      return { id: '' };
+   };
+   this.getAll = function(){ return this.children; };
+
+   this.html = function() {
+      var markup =   '<div class=\'appsite\' id=\'' + this.id + '\'>' +
+                     '\t<span class=\'name\'>Application Site: ' + this.name + '</span>' +
+                     '</div>';
+      return markup;
+   };
+   this.jQobj = function(){
+      return this.mother ?
+                  this.mother.jQobj().find('#' + this.id + '.appsite') :
+                  $('#' + this.id + '.appsite');
+      };
+}
+
+function Activity( id, name ) {
+   this.id = id;
+   this.name = name;
+
+   this.cssId = id.replace(/\./g, '_');
+
+   this.children = [];
+   this.append = function( field ){
+                     field.mother = this;
+                     this.children.push( field );
+                     this.jQobj().append( field.html() );
+                     };
+   this.getAll = function(){ return this.fields.concat( this.methods ); };
+   this.getChild = function( name ){
+      for( i=0; i < this.children.length; i++)
+         if( this.children[i].name = name )
+            return this.children[i];
+      return { name: '' };
+   }
+
+   this.html = function(){
+      var markup =   '<div class=\'activity\' id=\'' + this.cssId + '\'>' +
+                     '\t<span class=\'name\'>Activity: ' + this.name + '</span>' +
+                     '\t<span class=\'id\'>' + this.id + '</span>' +
+                     '</div>';
+      return markup;
+   };
+   this.jQobj = function(){
+      return this.mother ?
+                  this.mother.jQobj().find('#' + this.cssId + '.activity') :
+                  $('#' + this.cssId + '.activity');
+      };
+
+}
+
+function Field( name, label, className, colName, datatype, value, disabled, nullValue, valid ){
+   this.name = name;
+   this.label = label;
+   this.className = className;
+   this.colName = colName;
+   this.datatype = datatype;
+   this.value = value;
+   this.disabled = disabled;
+   this.nullValue = nullValue;
+   this.valid = valid;
+
+   this.html = function(){
+      var markup =   '<div class=\'field\' id=\'' + this.name + '\' style=\'display: none\'>' +
+                     '<span class=\'title\'>Field</span>';
+                  
+      markup += generatePairMarkup( 'Name', this.name );
+      if( $(this).attr('label') != '' )      markup += generatePairMarkup( 'Label', this.label );
+      if( $(this).attr('class') != '' )      markup += generatePairMarkup( 'Class', this.className );
+      if( $(this).attr('colName') != '' )    markup += generatePairMarkup( 'ColumnName', this.colName );
+      if( $(this).attr('datatype') != '' )   markup += generatePairMarkup( 'Datatype', this.datatype );
+      if( $(this).attr('value') != '' )      markup += generatePairMarkup( 'Value', this.value );
+      if( $(this).attr('disabled') != '' )   markup += generatePairMarkup( 'Disabled?', this.disabled );
+      if( $(this).attr('null') != '' )       markup += generatePairMarkup( 'Null Value', this.nulValue);
+      if( $(this).attr('valid') != '' )      markup += generatePairMarkup( 'Valid', this.valid );
+
+      markup += '</div>';
+      return markup;
+   };
+   this.jQobj = function(){
+      return this.mother ?
+                     this.mother.jQobj().find('#' + this.name + '.field') :
+                     $('#' + this.name + '.field');
+      };
+
+}
+
+
+function Method( name, description, returns, isDataPublication ) {
+   this.name = name;
+   this.description = description;
+   this.returns = returns;
+   this.isDataPublication = isDataPublication;
+
+   this.children = [];
+   this.append = function( parameter ){
+                           parameter.mother = this;
+                           this.children.push( parameter );
+                           this.jQobj().append( parameter.html() );
+                           };
+   this.getChild = function( name ){
+      for( i=0; i < this.children.length; i++ )
+         if( this.children[i].name == name )
+            return this.children[i];
+      return { name: '' };
+   };
+   this.getAll = function(){ return this.children; };
+
+
+   this.html = function() {
+      var markup =   '<div class=\'method\' id=\'' + this.name + '\' style=\'display: none\'>' +
+                     '<span class=\'title\'>Method</span>';
+
+      markup += generatePairMarkup( 'Name', this.name );
+      if( $(this).attr('label') != '' )   markup += generatePairMarkup( 'Description', this.description );
+      if( $(this).attr('class') != '' )   markup += generatePairMarkup( 'Returns', this.returns );
+      if( $(this).attr('colName') != '' ) markup += generatePairMarkup( 'Is Data Publication?', this.isDataPublication );
+
+      markup += '</div>';
+      return markup;
+
+   };
+   this.jQobj = function(){
+      return this.mother ?
+                  this.mother.jQobj().find('#' + this.name + '.method') :
+                  $('#' + this.name + '.method');
+      };
+}
+
+function Parameter( name, datatype ) {
+   this.name = name;
+   this.datatype = datatype;
+
+   this.html = function(){
+      var markup =   '<div class=\'parameter\' id=\'' + $(this).attr('name') + '\' style=\'display: none\'>' +
+                     '<span class=\'title\'>Parameter</span>';
+
+      markup += generatePairMarkup( 'Name', $(this).attr('name') );
+      if( $(this).attr('label') != '' )    markup += generatePairMarkup( 'Datatype', $(this).attr('datatype') );
+
+      markup += '</div>';
+      return markup;
+   };
+   this.jQobj = function(){
+      return this.mother ?
+                  this.mother.jQobj().find('#' + this.name + '.parameter') :
+                  $('#' + this.name + '.parameter');
+      };
+}
+
+
+
+
+
+function generatePairMarkup( key, value ){
+
+   return   '\t\t\t<div class=\'pair\'>' +
+            '<span class=\'name key\'>' + key + '</span>' +
+            '<span class=\'name val\'>' + value + '</span>' +
+            '</div>';
+}
 
