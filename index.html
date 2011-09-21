@@ -1,0 +1,44 @@
+<html>
+<head>
+<title>Addulator</title>
+
+<link href="css/common.css?1308766139" media="screen" rel="stylesheet" type="text/css" />
+
+<script type='text/javascript' src='https://ajax.googleapis.com/ajax/libs/jquery/1.4.2/jquery.js'></script>
+<script type='text/javascript' src='../js/knockout-1.2.1.js' ></script>
+<script type='text/javascript' src='../js/jquery.cookies.2.2.0.js'></script>
+<script type='text/javascript' src='../js/expanz.tool.js' ></script>
+
+
+<script type='text/javascript'>
+
+	function error( str ){
+		$('.error').html( "<span style='color:red'>" + str + "</span>" );
+	}
+
+</script>
+</head>
+
+<body>
+
+	<div id='container'>
+                <div class='inputcontainer' id='url'>
+                  <span class='label'>Endpoint URL</span>
+                  <div class='input'>
+                     <select id='protocol' data-bind='options: URLProtocols, value: chosenURLProtocol'></select>
+                     <input id='endpoint' type='text' data-bind='value: URLEndpoint' />
+                  </div>
+                </div>
+
+		<div class='submit' id='login'>
+			<button	data-bind='click: Lookup'>Lookup</button>
+		</div>
+
+		<div class='error'></div>
+	</div>
+
+</body>
+</html>
+
+
+

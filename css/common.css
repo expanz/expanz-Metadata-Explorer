@@ -1,0 +1,130 @@
+/*
+ *  Common Elements
+ */
+
+body {
+	margin: 0px;
+	padding: 0px;
+	font-family: Helvetica, Arial, Sans-Serif;
+}
+
+input {
+	font-size: 14px;
+	width: 540px;
+}
+
+button {
+	margin: 5px;
+	padding: 10px 35px;
+	vertical-align: middle;
+	cursor: pointer;
+
+	border: 0px;
+	border-radius: 4px;
+	background-clip: padding-box;
+	background: #65a9d7;
+	
+	color: white;
+	font-size: 16px;
+	font-weight: bold;
+	text-decoration: none;
+}
+button:hover {
+	background: #28597a;
+	color: #ccc;
+}
+
+button.small {
+	margin: 5px 15px;
+	padding: 5px 15px;
+	font-size: 12px;
+}
+
+/*
+ *  Common selectors
+ */
+
+#container {
+	margin: 200px auto;
+	width: 700px;
+	display: block;
+}
+.label {
+	font-size: 18px;
+	width: 100px;
+}
+.inputcontainer {
+	text-align: left;
+}
+.input{
+	margin: 20px 15px;
+}
+#protocol {
+	width: 110px;
+	
+	font-size: 14px;
+	font-weight: bold;
+}
+#endpoint {
+	float: right;
+}
+.submit {
+	margin-top: 40px;
+}
+.submit button {
+	float: right;
+}
+
+.error {
+	font-size: 20px;
+	color: darkred;
+}
+
+/*
+ * Tool
+ */
+.appsite > .name{
+	font-weight: bold;
+	font-size: 24px;
+	line-height: 2em;
+	
+	margin: 20px 10px;
+}
+
+.activity {
+	border-style: double;
+	border-width: 2px;
+}
+.activity:hover {
+	cursor: pointer;
+}
+.activity > .name, .activity > .id{
+	font-size: 18px;
+	line-height: 1.5em;
+	font-weight: bold;
+	
+	margin: 5px 10px;
+}
+
+
+.field, .method {
+	border-style: dotted;
+	border-width: 1px;
+	font-size: 14px;
+	margin: 5px;
+	padding: 2px;
+}
+.field > .title,  .method > .title, .parameter > .title{
+	font-size: 16px;
+	font-weight: bold;
+	margin: 2px 5px;
+}
+.field > .pair, .method > .pair {
+	margin: 2px;
+}
+.field > .pair >.val, .method > .pair >.val {
+	float: right;
+}
+
+
+ 
