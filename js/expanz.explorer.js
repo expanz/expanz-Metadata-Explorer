@@ -17,7 +17,7 @@ $(document).ready( function() {
 	var Bindings = {
                 URLProtocols: ko.observableArray( URLProtocols ),
                 chosenURLProtocol: ko.observable( URLProtocols[0] ),
-                URLEndpoint: ko.observable('test.expanz.com/...'),
+                URLEndpoint: ko.observable('test.expanz.com/...')
                 };
         Bindings.Lookup = ListAvailableSites( Bindings );
 	ko.applyBindings( Bindings );
