@@ -5,14 +5,22 @@
 <link href="css/common.css?1308766139" media="screen" rel="stylesheet" type="text/css" />
 
 <script type='text/javascript' src='https://ajax.googleapis.com/ajax/libs/jquery/1.4.2/jquery.js'></script>
+<script type='text/javascript' src='https://ajax.googleapis.com/ajax/libs/jqueryui/1.8.16/jquery-ui.min.js'></script>
 <script type='text/javascript' src='../Expanz-JavaScript-SDK/js/knockout-1.2.1.js' ></script>
-<script type='text/javascript' src='../Expanz-JavaScript-SDK/js/jquery.cookies.2.2.0.js'></script>
 <script type='text/javascript' src='js/expanz.explorer.js' ></script>
-
 
 <script type='text/javascript'>
 
    var _URLproxy = '../expanz-Proxy/proxy.php';
+
+   $(function() {
+
+      var urls = [   'test.expanz.com/ESADemoService/ESAService.svc/restish/',
+                     'test.expanz.com/ESADemoService/ESAService.svc/restishssl/',
+                     ];
+
+      $('#endpoint').autocomplete({ source: urls });
+   });
 
 </script>
 </head>

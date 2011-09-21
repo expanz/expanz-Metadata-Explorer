@@ -17,7 +17,7 @@ $(document).ready( function() {
 	var Bindings = {
                 URLProtocols: ko.observableArray( URLProtocols ),
                 chosenURLProtocol: ko.observable( URLProtocols[0] ),
-                URLEndpoint: ko.observable('test.expanz.com/...')
+                URLEndpoint: ko.observable('test.expanz.com/...'),
                 };
         Bindings.Lookup = ListAvailableSites( Bindings );
 	ko.applyBindings( Bindings );
@@ -37,9 +37,11 @@ function error( message ){
 function ListAvailableSites( fields ){
    return function apply( event ){
 
+      var endpoint = $('#endpoint').val();
+
       $('#container').html('<div id=\'error\'></div>');
       
-      var url = fields['chosenURLProtocol']() + fields['URLEndpoint']();
+      var url = fields['chosenURLProtocol']() + endpoint;
       var channel = SendGetRequest( url );
       channel( 'ListAvailableSites',
                parseListAvailableSitesResponse( ListActivitiesForSite( channel ), $('#container'), error ),

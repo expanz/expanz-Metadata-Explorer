@@ -76,6 +76,19 @@ button.small {
 	float: right;
 }
 
+.ui-menu {
+	width: 500px;
+	padding: 10px;
+	list-style-type: none;
+}
+.ui-menu:hover {
+	cursor: pointer;
+}
+.ui-menu-item {
+	padding: 3px 2px 3px 10px;
+	background-color: lightgreen;
+}
+
 .error {
 	font-size: 20px;
 	color: darkred;
@@ -84,7 +97,7 @@ button.small {
 /*
  * Tool
  */
- .appsite {
+.appsite {
 	margin-top: 50px;;
 }
 .appsite > .name{
@@ -98,16 +111,22 @@ button.small {
 .activity {
 	border-style: double;
 	border-width: 2px;
+	padding: 5px 5px;
 }
 .activity:hover {
 	cursor: pointer;
+	background-color: lightgreen;
+	color: white;
 }
 .activity > .name, .activity > .id{
 	font-size: 18px;
 	line-height: 1.5em;
 	font-weight: bold;
 	
-	margin: 5px 10px;
+	margin: 5px 15px;
+}
+.activity > .id {
+	text-align: right;
 }
 
 
