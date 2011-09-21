@@ -249,9 +249,12 @@ function AppSite( id, name, authenticationMode ) {
       return markup;
    };
    this.jQobj = function(){
-      return this.mother ?
-                  this.mother.jQobj().find('#' + this.id + '.appsite') :
-                  $('#' + this.id + '.appsite');
+      if( this.mother ){
+         var jQobj = this.mother.jQobj().find('#' + this.id + '.appsite');
+         this.jQobj = function( obj ){ return function(){ return obj; } }( jQobj );
+         return jQobj;
+      }
+      return $('#' + this.id + '.appsite');
       };
 }
 
@@ -283,9 +286,12 @@ function Activity( id, name ) {
       return markup;
    };
    this.jQobj = function(){
-      return this.mother ?
-                  this.mother.jQobj().find('#' + this.cssId + '.activity') :
-                  $('#' + this.cssId + '.activity');
+      if( this.mother ){
+         var jQobj = this.mother.jQobj().find('#' + this.id + '.activity');
+         this.jQobj = function( obj ){ return function(){ return obj; } }( jQobj );
+         return jQobj;
+      }
+      return $('#' + this.id + '.activity');
       };
 
 }
@@ -319,9 +325,12 @@ function Field( name, label, className, colName, datatype, value, disabled, null
       return markup;
    };
    this.jQobj = function(){
-      return this.mother ?
-                     this.mother.jQobj().find('#' + this.name + '.field') :
-                     $('#' + this.name + '.field');
+      if( this.mother ){
+         var jQobj = this.mother.jQobj().find('#' + this.id + '.field');
+         this.jQobj = function( obj ){ return function(){ return obj; } }( jQobj );
+         return jQobj;
+      }
+      return $('#' + this.id + '.field');
       };
 
 }
@@ -362,9 +371,12 @@ function Method( name, description, returns, isDataPublication ) {
 
    };
    this.jQobj = function(){
-      return this.mother ?
-                  this.mother.jQobj().find('#' + this.name + '.method') :
-                  $('#' + this.name + '.method');
+      if( this.mother ){
+         var jQobj = this.mother.jQobj().find('#' + this.id + '.method');
+         this.jQobj = function( obj ){ return function(){ return obj; } }( jQobj );
+         return jQobj;
+      }
+      return $('#' + this.id + '.method');
       };
 }
 
@@ -383,9 +395,12 @@ function Parameter( name, datatype ) {
       return markup;
    };
    this.jQobj = function(){
-      return this.mother ?
-                  this.mother.jQobj().find('#' + this.name + '.parameter') :
-                  $('#' + this.name + '.parameter');
+      if( this.mother ){
+         var jQobj = this.mother.jQobj().find('#' + this.id + '.parameter');
+         this.jQobj = function( obj ){ return function(){ return obj; } }( jQobj );
+         return jQobj;
+      }
+      return $('#' + this.id + '.parameter');
       };
 }
 
