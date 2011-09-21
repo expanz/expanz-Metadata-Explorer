@@ -115,7 +115,7 @@ button.small {
 }
 .activity:hover {
 	cursor: pointer;
-	background-color: lightgreen;
+	background-color: lightcoral;
 	color: white;
 }
 .activity > .name, .activity > .id{
@@ -130,22 +130,35 @@ button.small {
 }
 
 
-.field, .method {
+.field,
+.method {
 	border-style: dotted;
 	border-width: 1px;
 	font-size: 14px;
 	margin: 5px;
 	padding: 2px;
 }
-.field > .title,  .method > .title, .parameter > .title{
+.field:hover,
+.method:hover {
+	background-color: lightblue;
+	color: black;
+}
+
+.field > .title, 
+.method > .title,
+.parameter > .title{
 	font-size: 16px;
 	font-weight: bold;
 	margin: 2px 5px;
 }
-.field > .pair, .method > .pair {
+.field > .pair,
+.method > .pair,
+.parameter > .pair {
 	margin: 2px;
 }
-.field > .pair >.val, .method > .pair >.val {
+.field > .pair >.val,
+.method > .pair >.val,
+.parameter > .pair > .val {
 	float: right;
 }
 

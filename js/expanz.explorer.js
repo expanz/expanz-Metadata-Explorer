@@ -29,6 +29,8 @@ function error( message ){
    $('#error').append( 'Error: ' + message );
 }
 
+var treeBase = new ExplorerTree( $('body') );
+
 /*
  *   Actions
  *         :top-level functions issued by user input or server request
@@ -39,7 +41,7 @@ function ListAvailableSites( fields ){
 
       var endpoint = $('#endpoint').val();
 
-      var treeBase = new ExplorerTree( $('#container') );
+      treeBase = new ExplorerTree( $('#container') );
       treeBase.jQobj().html('<div id=\'error\'></div>');
       
       var url = fields['chosenURLProtocol']() + endpoint;
@@ -123,8 +125,8 @@ function parseGetSchemaForActivityResponse( mother ){
             var activity = $(xml).find("Activity");
 	    if( activity ){
 
-               mother.jQobj().toggle(  function(){ $(this).find('.field,.method').show(); },
-                                       function(){ $(this).find('.field,.method').hide(); }
+               mother.jQobj().toggle(  function(){ $(this).find('.field,.method,.parameter').show(); },
+                                       function(){ $(this).find('.field,.method,.parameter').hide(); }
                                        );
 
                // NOTE: Activity has a bunch of extra fields here. $(activity).find('Activity').attr(...)
@@ -372,7 +374,7 @@ function Method( name, description, returns, isDataPublication ) {
    };
    this.jQobj = function(){
       if( this.mother ){
-         var jQobj = this.mother.jQobj().find('#' + this.id + '.method');
+         var jQobj = this.mother.jQobj().find('#' + this.name + '.method');
          this.jQobj = function( obj ){ return function(){ return obj; } }( jQobj );
          return jQobj;
       }
