@@ -46,6 +46,9 @@ function ListAvailableSites( fields ){
       
       var url = fields['chosenURLProtocol']() + endpoint;
       var channel = SendGetRequest( url );
+
+      treeBase.channel = channel;
+
       channel( 'ListAvailableSites',
                parseListAvailableSitesResponse( ListActivitiesForSite( channel ), treeBase, error ),
 	       error
@@ -85,6 +88,7 @@ function parseListAvailableSitesResponse( nextLink, mother ){
                                              $(this).attr('name'),
                                              $(this).attr('authenticationMode')
                                              );
+                  appsite.channel = mother.channel;
                   mother.append( appsite );
                   eval( nextLink )( appsite );
                });
@@ -106,8 +110,20 @@ function parseListActivitiesForSiteResponse( nextLink, mother ){
                      var activity = new Activity(  $(this).attr('id'),
                                                    $(this).attr('name')
                                                    );
+                     activity.channel = mother.channel;
                      mother.append( activity );
-                     eval( nextLink )( activity );
+
+                     activity.jQobj().toggle(  function(){ 
+                                                var fields = activity.getAll();
+                                                for( var i=0, len = fields.length; field = fields[i], i<len; i++ )
+                                                   field.jQobj().show();
+                                                }, 
+                                             function(){
+                                                var fields = activity.getAll();
+                                                for( var i=0, len = fields.length; field=fields[i], i<len; i++ )
+                                                   field.jQobj().hide();
+                                                } 
+                                             );
                   }
                });
 	    }
@@ -125,9 +141,7 @@ function parseGetSchemaForActivityResponse( mother ){
             var activity = $(xml).find("Activity");
 	    if( activity ){
 
-               mother.jQobj().toggle(  function(){ $(this).find('.field,.method,.parameter').show(); },
-                                       function(){ $(this).find('.field,.method,.parameter').hide(); }
-                                       );
+               
 
                // NOTE: Activity has a bunch of extra fields here. $(activity).find('Activity').attr(...)
 
@@ -272,13 +286,22 @@ function Activity( id, name ) {
                      this.children.push( field );
                      this.jQobj().append( field.html() );
                      };
-   this.getAll = function(){ return this.fields.concat( this.methods ); };
+   this.getAll = function(){ 
+      if( this.children.length < 1 )   this.load();
+      return this.children;
+   };
    this.getChild = function( name ){
+      if( this.children.length < 1 )   this.load();
       for( i=0; i < this.children.length; i++)
          if( this.children[i].name = name )
             return this.children[i];
       return { name: '' };
    }
+
+   this.load = function() {
+      GetSchemaForActivity( this.channel, this.mother )( this );
+      return true;
+   };
 
    this.html = function(){
       var markup =   '<div class=\'activity\' id=\'' + this.cssId + '\'>' +
@@ -310,7 +333,7 @@ function Field( name, label, className, colName, datatype, value, disabled, null
    this.valid = valid;
 
    this.html = function(){
-      var markup =   '<div class=\'field\' id=\'' + this.name + '\' style=\'display: none\'>' +
+      var markup =   '<div class=\'field\' id=\'' + this.name + '\' >' +
                      '<span class=\'title\'>Field</span>';
                   
       markup += generatePairMarkup( 'Name', this.name );
@@ -328,7 +351,7 @@ function Field( name, label, className, colName, datatype, value, disabled, null
    };
    this.jQobj = function(){
       if( this.mother ){
-         var jQobj = this.mother.jQobj().find('#' + this.id + '.field');
+         var jQobj = this.mother.jQobj().find('#' + this.name + '.field');
          this.jQobj = function( obj ){ return function(){ return obj; } }( jQobj );
          return jQobj;
       }
@@ -360,7 +383,7 @@ function Method( name, description, returns, isDataPublication ) {
 
 
    this.html = function() {
-      var markup =   '<div class=\'method\' id=\'' + this.name + '\' style=\'display: none\'>' +
+      var markup =   '<div class=\'method\' id=\'' + this.name + '\' >' +
                      '<span class=\'title\'>Method</span>';
 
       markup += generatePairMarkup( 'Name', this.name );
@@ -387,7 +410,7 @@ function Parameter( name, datatype ) {
    this.datatype = datatype;
 
    this.html = function(){
-      var markup =   '<div class=\'parameter\' id=\'' + $(this).attr('name') + '\' style=\'display: none\'>' +
+      var markup =   '<div class=\'parameter\' id=\'' + $(this).attr('name') + '\'>' +
                      '<span class=\'title\'>Parameter</span>';
 
       markup += generatePairMarkup( 'Name', $(this).attr('name') );
