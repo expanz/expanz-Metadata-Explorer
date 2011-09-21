@@ -287,11 +287,11 @@ function Activity( id, name ) {
    };
    this.jQobj = function(){
       if( this.mother ){
-         var jQobj = this.mother.jQobj().find('#' + this.id + '.activity');
+         var jQobj = this.mother.jQobj().find('#' + this.cssId + '.activity');
          this.jQobj = function( obj ){ return function(){ return obj; } }( jQobj );
          return jQobj;
       }
-      return $('#' + this.id + '.activity');
+      return $('#' + this.cssId + '.activity');
       };
 
 }
@@ -415,4 +415,5 @@ function generatePairMarkup( key, value ){
             '<span class=\'name val\'>' + value + '</span>' +
             '</div>';
 }
+
 
