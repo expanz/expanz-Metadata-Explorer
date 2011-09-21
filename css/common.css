@@ -45,7 +45,7 @@ button.small {
  */
 
 #container {
-	margin: 200px auto;
+	margin: 50px auto;
 	width: 700px;
 	display: block;
 }
@@ -54,6 +54,7 @@ button.small {
 	width: 100px;
 }
 .inputcontainer {
+	margin-top: 150px;
 	text-align: left;
 }
 .input{
@@ -83,6 +84,9 @@ button.small {
 /*
  * Tool
  */
+ .appsite {
+	margin-top: 50px;;
+}
 .appsite > .name{
 	font-weight: bold;
 	font-size: 24px;

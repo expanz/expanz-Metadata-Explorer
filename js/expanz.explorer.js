@@ -102,16 +102,14 @@ function parseListActivitiesForSiteResponse( nextLink, jQObj ){
                $(activities).find('Activity').each( function(){
 
                   if( $(this).attr('name') || $(this).attr('id') ) {
-                     var cssId = $(this).attr('id').replace(/\./g, '_'); //$(this).attr('name') ? $(this).attr('name') : $(this).attr('id').replace(/\./g, '_');
-
-                     if( cssId == 'Config' ) console.log( $(this) );
+                     var cssId = $(this).attr('id').replace(/\./g, '_'); 
 
                      jQObj.append(  '<div class=\'activity\' id=\'' + cssId + '\'>' +
                                     '\t<span class=\'name\'>Activity: ' + $(this).attr('name') + '</span>' +
                                     '\t<span class=\'id\'>' + $(this).attr('id') + '</span>' +
                                     '</div>'
                                     );
-                     eval( nextLink )( $(this).attr('id'), $('#' + cssId + '.activity') );
+                     eval( nextLink )( $(this).attr('id'), jQObj.find('#' + cssId + '.activity') );
                   }
                });
 	    }
@@ -148,10 +146,10 @@ function parseGetSchemaForActivityResponse( jQObj ){
                   jQObj.append(  '<div class=\'field\' id=\'' + $(this).attr('name') + '\'>' +
                                  '<span class=\'title\'>Field</span>' +
                                  '</div>' );
-
+                  
                   var jQFieldObj = jQObj.find('#' + $(this).attr('name') + '.field' );
                   jQFieldObj.css('display', 'none');
-
+                  
                   if( $(this).attr('name') ) jQFieldObj.append(  generateFieldMarkup( 'Name', $(this).attr('name') ) );
                   if( $(this).attr('label') ) jQFieldObj.append( generateFieldMarkup( 'Label', $(this).attr('label') ) );
                   if( $(this).attr('class') ) jQFieldObj.append( generateFieldMarkup( 'Class', $(this).attr('class') ) );
@@ -230,12 +228,5 @@ function SendGetRequest( url ){
    }
 }
 
-
-/*
- *   Private Variables
- *
- */
-
-var _URLproxy = '../expanz-Proxy/proxy.php';
 
 
