@@ -236,6 +236,6 @@ function SendGetRequest( url ){
  *
  */
 
-var _URLproxy = '../proxy/proxy.php';
+var _URLproxy = '../expanz-Proxy/proxy.php';
 
 
