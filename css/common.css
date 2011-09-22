@@ -160,12 +160,12 @@ button.small {
 .method > .pair,
 .parameter > .pair {
 	margin: 2px;
-	text-align: right;
+	text-align: left;
 }
-.field > .pair >.key,
-.method > .pair >.key,
-.parameter > .pair > .key {
-	float: left;
+.field > .pair >.val,
+.method > .pair >.val,
+.parameter > .pair >.val {
+	float: right;
 }
 
 

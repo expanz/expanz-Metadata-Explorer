@@ -436,8 +436,8 @@ function Parameter( name, datatype ) {
 function generatePairMarkup( key, value ){
 
    return   '\t\t\t<div class=\'pair\'>' +
-            '<span class=\'name key\'>' + key + '</span>' +
             '<span class=\'name val\'>' + value + '</span>' +
+            '<span class=\'name key\'>' + key + '</span>' +
             '</div>';
 }
 
