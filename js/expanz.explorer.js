@@ -29,7 +29,7 @@ function error( message ){
    $('#error').append( 'Error: ' + message );
 }
 
-var treeBase = new ExplorerTree( $('body') );
+var treeBase;
 
 /*
  *   Actions
@@ -41,8 +41,12 @@ function ListAvailableSites( fields ){
 
       var endpoint = $('#endpoint').val();
 
-      treeBase = new ExplorerTree( $('#container') );
-      treeBase.jQobj().html('<div id=\'error\'></div>');
+      treeBase = new ExplorerTree(  endpoint.split('/')[0].replace(/\./g, '_'),
+                                    new TreeNode( $('#main')
+                                                   .html('<div id=\'error\'></div>')
+                                                   .css('width','2500px')
+                                                   )
+                                    );
       
       var url = fields['chosenURLProtocol']() + endpoint;
       var channel = SendGetRequest( url );
@@ -112,18 +116,6 @@ function parseListActivitiesForSiteResponse( nextLink, mother ){
                                                    );
                      activity.channel = mother.channel;
                      mother.append( activity );
-
-                     activity.jQobj().toggle(  function(){ 
-                                                var fields = activity.getAll();
-                                                for( var i=0, len = fields.length; field = fields[i], i<len; i++ )
-                                                   field.jQobj().show();
-                                                }, 
-                                             function(){
-                                                var fields = activity.getAll();
-                                                for( var i=0, len = fields.length; field=fields[i], i<len; i++ )
-                                                   field.jQobj().hide();
-                                                } 
-                                             );
                   }
                });
 	    }
@@ -140,11 +132,7 @@ function parseGetSchemaForActivityResponse( mother ){
 
             var activity = $(xml).find("Activity");
 	    if( activity ){
-
-               
-
                // NOTE: Activity has a bunch of extra fields here. $(activity).find('Activity').attr(...)
-
                $(activity).find('Field').each( function(){
                   var field = new Field(  $(this).attr('name'),
                                           $(this).attr('label') ?    $(this).attr('label') :    '',
@@ -173,10 +161,7 @@ function parseGetSchemaForActivityResponse( mother ){
                                                       );
                      method.append( parameter );
                   });
-
                });
-
-
 	    }
             else{
                // error
@@ -219,17 +204,22 @@ function SendGetRequest( url ){
 
 
 
+function TreeNode( jQobj ) {
+   this.jQobj = function(){ return jQobj; };
+}
 
-
-function ExplorerTree( jQobj ) {
-   this.rootJQObj = jQobj;
-   this.jQobj = function(){ return this.rootJQObj; }
+function ExplorerTree( id, baseTreeNode ) {
+   this.id = id;
+   this.mother = baseTreeNode;
 
    this.children = [];
    this.append = function( appsite ){
                         appsite.mother = this;
                         this.children.push( appsite );
+
+                        treeBase.mother.jQobj().append( appsite.htmlContainer() );
                         this.jQobj().append( appsite.html() );
+                        appsite.setupTabClickHandler();
                         };
    this.getChild = function( id ){
       for( i=0; i < this.children.length; i++ )
@@ -237,6 +227,18 @@ function ExplorerTree( jQobj ) {
             return this.children[i];
    };
    this.getAll = function(){ return this.children; };
+
+   // constructor
+   this.mother.jQobj().append(
+            '<div class="vertical_section appserver" id="' + this.id + '">' +
+            '\t<div class="title">Application Sites</div>' +
+            '</div>'
+            );
+   this.jQobj = function(){
+      var jQobj = this.mother.jQobj().find('#' + this.id + '.appserver.vertical_section');
+      this.jQobj = function( obj ){ return function(){ return obj; } }( jQobj );
+      return jQobj;
+   };
 }
 
 function AppSite( id, name, authenticationMode ) {
@@ -248,7 +250,10 @@ function AppSite( id, name, authenticationMode ) {
    this.append = function( activity ){
                         activity.mother = this;
                         this.children.push( activity );
+
+                        treeBase.mother.jQobj().append( activity.htmlContainer() );
                         this.jQobj().append( activity.html() );
+                        activity.setupTabClickHandler();
                         };
    this.getChild = function( id ){
       for( i=0; i < this.children.length; i++ )
@@ -259,19 +264,41 @@ function AppSite( id, name, authenticationMode ) {
    this.getAll = function(){ return this.children; };
 
    this.html = function() {
-      var markup =   '<div class=\'appsite\' id=\'' + this.id + '\'>' +
-                     '\t<span class=\'name\'>Application Site: ' + this.name + '</span>' +
+      var markup =   '<div class="horizontaltab" id="' + this.id + '">' +
+                     '\t<span class="title">' + this.name + '</span>' +
+                     '</div>';
+      return markup;
+   };
+   this.htmlContainer = function(){
+      var markup =   '<div class="vertical_section dynamicshow appsite" id="' + this.id + '">' +
+                     '\t<div class="title">Activities</div>' +
                      '</div>';
       return markup;
    };
    this.jQobj = function(){
       if( this.mother ){
-         var jQobj = this.mother.jQobj().find('#' + this.id + '.appsite');
+         var jQobj = treeBase.mother.jQobj().find('#' + this.id + '.appsite.vertical_section');
          this.jQobj = function( obj ){ return function(){ return obj; } }( jQobj );
          return jQobj;
       }
-      return $('#' + this.id + '.appsite');
+      return $('#' + this.id + '.appsite.vertical_section');
       };
+   this.jQTabObj = function(){
+      var jQobj = this.mother.jQobj().find( '#' + this.id + '.horizontaltab' );
+      this.jQTabObj = function( obj ){ return function(){ return obj; } }( jQobj );
+      return jQobj;
+   };
+
+   this.setupTabClickHandler = function(){
+      setupTabClickHandler( this );
+   };
+   this.show = function(){
+      this.jQobj().show();
+   };
+   this.hide = function(){
+      this.jQobj().hide();
+   };
+
 }
 
 function Activity( id, name ) {
@@ -284,7 +311,10 @@ function Activity( id, name ) {
    this.append = function( field ){
                      field.mother = this;
                      this.children.push( field );
+
+                     treeBase.mother.jQobj().append( field.htmlContainer() );
                      this.jQobj().append( field.html() );
+                     field.setupTabClickHandler();
                      };
    this.getAll = function(){ 
       if( this.children.length < 1 )   this.load();
@@ -304,21 +334,43 @@ function Activity( id, name ) {
    };
 
    this.html = function(){
-      var markup =   '<div class=\'activity\' id=\'' + this.cssId + '\'>' +
-                     '\t<span class=\'name\'>Activity: ' + this.name + '</span>' +
+      var markup =   '<div class=\'horizontaltab\' id=\'' + this.cssId + '\'>' +
+                     '\t<span class=\'title\'>' + this.name + '</span>' +
                      '\t<span class=\'id\'>' + this.id + '</span>' +
                      '</div>';
       return markup;
    };
+   this.htmlContainer = function(){
+      var markup =   '<div class="vertical_section dynamicshow activity ' + this.mother.id + '" id="' + this.cssId + '">' +
+                     '\t<div class="title">Fields</div>' +
+                     '</div>';
+      return markup;
+   }
    this.jQobj = function(){
       if( this.mother ){
-         var jQobj = this.mother.jQobj().find('#' + this.cssId + '.activity');
+         var jQobj = treeBase.mother.jQobj().find('#' + this.cssId + '.' + this.mother.id + '.activity.vertical_section');
          this.jQobj = function( obj ){ return function(){ return obj; } }( jQobj );
          return jQobj;
       }
-      return $('#' + this.cssId + '.activity');
+      return $('#' + this.cssId + '.activity.vertical_section');
       };
+   this.jQTabObj = function(){
+      var jQobj = this.mother.jQobj().find( '#' + this.cssId + '.horizontaltab' );
+      this.jQTabObj = function( obj ){ return function(){ return obj; } }( jQobj );
+      return jQobj;
+   };
 
+   this.setupTabClickHandler = function(){
+      setupTabClickHandler( this );
+   };
+   this.show = function(){
+      if( this.children.length < 1 )   this.load();
+      this.jQobj().show();
+   };
+   this.hide = function(){
+      this.jQobj().hide();
+   };
+   
 }
 
 function Field( name, label, className, colName, datatype, value, disabled, nullValue, valid ){
@@ -333,7 +385,7 @@ function Field( name, label, className, colName, datatype, value, disabled, null
    this.valid = valid;
 
    this.html = function(){
-      var markup =   '<div class=\'field\' id=\'' + this.name + '\' >' +
+      var markup =   '<div class=\'horizontaltab\' id=\'' + this.name + '\' >' +
                      '<span class=\'title\'>Field</span>';
                   
       markup += generatePairMarkup( 'Name', this.name );
@@ -349,14 +401,32 @@ function Field( name, label, className, colName, datatype, value, disabled, null
       markup += '</div>';
       return markup;
    };
+   this.htmlContainer = function(){ return ''; };
+
+   // TODO: this object has no vertical_section, so this function should be deprecated
    this.jQobj = function(){
       if( this.mother ){
-         var jQobj = this.mother.jQobj().find('#' + this.name + '.field');
+         var jQobj = this.mother.jQobj().find('#' + this.name + '.field.vertical_section');
          this.jQobj = function( obj ){ return function(){ return obj; } }( jQobj );
          return jQobj;
       }
-      return $('#' + this.id + '.field');
+      return $('#' + this.name + '.field.vertical_section');
       };
+   this.jQTabObj = function(){
+      var jQobj = this.mother.jQobj().find( '#' + this.name + '.horizontaltab' );
+      this.jQTabObj = function( obj ){ return function(){ return obj; } }( jQobj );
+      return jQobj;
+   };
+
+   this.setupTabClickHandler = function(){
+      console.log( 'Field: ' + this.name + ' had setupTabClickHandler() called on it.' );
+   };
+   this.show = function(){
+      console.log( 'Field: ' + this.name + ' had show() called on it.' );
+   };
+   this.hide = function(){
+      console.log( 'Field: ' + this.name + ' had hide() called on it.' );
+   };
 
 }
 
@@ -371,7 +441,9 @@ function Method( name, description, returns, isDataPublication ) {
    this.append = function( parameter ){
                            parameter.mother = this;
                            this.children.push( parameter );
+
                            this.jQobj().append( parameter.html() );
+                           parameter.setupTabClickHandler();
                            };
    this.getChild = function( name ){
       for( i=0; i < this.children.length; i++ )
@@ -383,7 +455,7 @@ function Method( name, description, returns, isDataPublication ) {
 
 
    this.html = function() {
-      var markup =   '<div class=\'method\' id=\'' + this.name + '\' >' +
+      var markup =   '<div class="horizontaltab" id="' + this.name + '" >' +
                      '<span class=\'title\'>Method</span>';
 
       markup += generatePairMarkup( 'Name', this.name );
@@ -395,14 +467,38 @@ function Method( name, description, returns, isDataPublication ) {
       return markup;
 
    };
+   this.htmlContainer = function() {
+      var markup =   '<div class="vertical_section dynamicshow method ' + this.mother.cssId + '" id="' + this.name + '">' +
+                     '\t<div class="title">Parameter</div>' +
+                     '</div>';
+      return markup;
+   };
    this.jQobj = function(){
       if( this.mother ){
-         var jQobj = this.mother.jQobj().find('#' + this.name + '.method');
+         var jQobj = treeBase.mother.jQobj().find('#' + this.name + '.' + this.mother.cssId + '.method.vertical_section');
          this.jQobj = function( obj ){ return function(){ return obj; } }( jQobj );
          return jQobj;
       }
-      return $('#' + this.id + '.method');
+      return $('#' + this.name + '.method.vertical_section');
       };
+   this.jQTabObj = function(){
+      var jQobj = this.mother.jQobj().find( '#' + this.name + '.horizontaltab' );
+      if( jQobj ){
+         this.jQTabObj = function( obj ){ return function(){ return obj; } }( jQobj );
+         return jQobj;
+      }
+      return $( '#' + this.name + '.horizontaltab' );
+   };
+
+   this.setupTabClickHandler = function(){
+      setupTabClickHandler( this );
+   };
+   this.show = function(){
+      this.jQobj().show();
+   };
+   this.hide = function(){
+      this.jQobj().hide();
+   };
 }
 
 function Parameter( name, datatype ) {
@@ -410,7 +506,7 @@ function Parameter( name, datatype ) {
    this.datatype = datatype;
 
    this.html = function(){
-      var markup =   '<div class=\'parameter\' id=\'' + $(this).attr('name') + '\'>' +
+      var markup =   '<div class="horizontaltab ' + this.mother.name + '" id="' + this.name + '">' +
                      '<span class=\'title\'>Parameter</span>';
 
       markup += generatePairMarkup( 'Name', $(this).attr('name') );
@@ -419,6 +515,7 @@ function Parameter( name, datatype ) {
       markup += '</div>';
       return markup;
    };
+   // TODO: this object has no vertical_section, so this function should be deprecated
    this.jQobj = function(){
       if( this.mother ){
          var jQobj = this.mother.jQobj().find('#' + this.id + '.parameter');
@@ -427,6 +524,21 @@ function Parameter( name, datatype ) {
       }
       return $('#' + this.id + '.parameter');
       };
+   this.jQTabObj = function(){
+      var jQobj = this.mother.jQobj().find( '#' + this.name + '.' + this.mother.name + '.horizontaltab' );
+      this.jQTabObj = function( obj ){ return function(){ return obj; } }( jQobj );
+      return jQobj;
+   };
+
+   this.setupTabClickHandler = function(){
+      console.log( 'Parameter: ' + this.name + ' had setupTabClickHandler() called on it.' );
+   };
+   this.show = function(){
+      console.log( 'Parameter: ' + this.name + ' had show() called on it.' );
+   };
+   this.hide = function(){
+      console.log( 'Parameter: ' + this.name + ' had hide() called on it.' );
+   };
 }
 
 
@@ -439,6 +551,28 @@ function generatePairMarkup( key, value ){
             '<span class=\'name val\'>' + value + '</span>' +
             '<span class=\'name key\'>' + key + '</span>' +
             '</div>';
+}
+
+
+
+// [ appsite, activity, field, parameter ]
+var currentDisplay = [];
+
+function setupTabClickHandler( node ){
+   node.jQTabObj().click( function(){
+      var verticalsToDrop = currentDisplay.length;
+      
+      if( $(this).parent().hasClass('appsite') )  verticalsToDrop -= 1;
+      if( $(this).parent().hasClass('activity') )  verticalsToDrop -= 2;
+      if( $(this).parent().hasClass('field') || $(this).parent().hasClass('method') )  verticalsToDrop -= 3;
+      if( $(this).parent().hasClass('parameter') )  verticalsToDrop -= 4;
+         
+      for( i=verticalsToDrop; i>0; i-- )
+         currentDisplay.pop().hide();
+
+      currentDisplay.push( node );
+      node.show();
+   });
 }
 
 
