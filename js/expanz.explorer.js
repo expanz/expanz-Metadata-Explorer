@@ -293,10 +293,12 @@ function AppSite( id, name, authenticationMode ) {
       setupTabClickHandler( this );
    };
    this.show = function(){
+      this.jQTabObj().toggleClass('clicked');
       this.jQobj().show();
    };
    this.hide = function(){
       this.jQobj().hide();
+      this.jQTabObj().toggleClass('clicked');
    };
 
 }
@@ -365,10 +367,13 @@ function Activity( id, name ) {
    };
    this.show = function(){
       if( this.children.length < 1 )   this.load();
+
+      this.jQTabObj().toggleClass('clicked');
       this.jQobj().show();
    };
    this.hide = function(){
       this.jQobj().hide();
+      this.jQTabObj().toggleClass('clicked');
    };
    
 }
@@ -430,10 +435,12 @@ function Field( name, label, className, colName, datatype, value, disabled, null
       setupTabClickHandler( this );
    };
    this.show = function(){
+      this.jQTabObj().toggleClass('clicked');
       this.jQobj().show();
    };
    this.hide = function(){
       this.jQobj().hide();
+      this.jQTabObj().toggleClass('clicked');
    };
 
 }
@@ -518,10 +525,13 @@ function Method( name, description, returns, isDataPublication ) {
    };
    this.show = function(){
       this.loadParameters();
+
+      this.jQTabObj().toggleClass('clicked');
       this.jQobj().show();
    };
    this.hide = function(){
       this.jQobj().hide();
+      this.jQTabObj().toggleClass('clicked');
    };
 }
 

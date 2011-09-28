@@ -321,7 +321,8 @@ button:hover {
 	background-color: #222;
 	color: white;
 }
-.horizontaltab:hover {
+.horizontaltab:hover,
+.horizontaltab.clicked {
 	background-color: white;
 	color: black;
 	cursor: pointer;
@@ -330,6 +331,7 @@ button:hover {
 	font-size: 22px;
 	font-weight: bold;
 }
+
 
 .dynamicshow {
 	display: none;
