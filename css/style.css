@@ -303,8 +303,11 @@ button:hover {
 	padding: 10px;
 	text-align: center;
 	
+	border-color: #222;
 	border-right-style: solid;
 	border-right-width: 3px;
+	border-bottom-style: solid;
+	border-bottom-width: 3px;
 	
 	font-size: 28px;
 	font-weight: bold;
@@ -332,12 +335,24 @@ button:hover {
 	display: none;
 }
 
-
-.horizontaltab > .pair {
-	padding: 1px 9px;
-	text-align: left;
+.details {
+	margin-top: 10px;
 }
-.horizontaltab > .pair >.val {
+
+.pair {
+	padding: 3px 10px;
+	
+	border-color: #222;
+	border-bottom-style: dashed;
+	border-bottom-width: 1px;
+	
+	text-align: left;
+	font-size: 16px;
+}
+.pair > .key {
+
+}
+.pair >.val {
 	float: right;
 }
 

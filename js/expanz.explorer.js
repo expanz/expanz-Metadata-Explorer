@@ -385,8 +385,15 @@ function Field( name, label, className, colName, datatype, value, disabled, null
    this.valid = valid;
 
    this.html = function(){
-      var markup =   '<div class=\'horizontaltab\' id=\'' + this.name + '\' >' +
-                     '<span class=\'title\'>Field</span>';
+      var markup =   '<div class="horizontaltab" id="' + this.name + '" >' +
+                     '<span class="title">+' + this.name + '</span>' +
+                     '</div>';
+      return markup;
+   };
+
+   this.htmlContainer = function(){
+      var markup =   '<div class="vertical_section dynamicshow field ' + this.mother.cssId + '" id="' + this.name + '" >' +
+                     '<div class=\'title\'>Field</div>';
                   
       markup += generatePairMarkup( 'Name', this.name );
       if( $(this).attr('label') != '' )      markup += generatePairMarkup( 'Label', this.label );
@@ -401,12 +408,10 @@ function Field( name, label, className, colName, datatype, value, disabled, null
       markup += '</div>';
       return markup;
    };
-   this.htmlContainer = function(){ return ''; };
-
-   // TODO: this object has no vertical_section, so this function should be deprecated
+   
    this.jQobj = function(){
       if( this.mother ){
-         var jQobj = this.mother.jQobj().find('#' + this.name + '.field.vertical_section');
+         var jQobj = treeBase.mother.jQobj().find('#' + this.name + '.' + this.mother.cssId + '.field.vertical_section');
          this.jQobj = function( obj ){ return function(){ return obj; } }( jQobj );
          return jQobj;
       }
@@ -414,18 +419,21 @@ function Field( name, label, className, colName, datatype, value, disabled, null
       };
    this.jQTabObj = function(){
       var jQobj = this.mother.jQobj().find( '#' + this.name + '.horizontaltab' );
-      this.jQTabObj = function( obj ){ return function(){ return obj; } }( jQobj );
-      return jQobj;
+      if( jQobj ){
+         this.jQTabObj = function( obj ){ return function(){ return obj; } }( jQobj );
+         return jQobj;
+      }
+      return $( '#' + this.name + '.horizontaltab' );
    };
 
    this.setupTabClickHandler = function(){
-      console.log( 'Field: ' + this.name + ' had setupTabClickHandler() called on it.' );
+      setupTabClickHandler( this );
    };
    this.show = function(){
-      console.log( 'Field: ' + this.name + ' had show() called on it.' );
+      this.jQobj().show();
    };
    this.hide = function(){
-      console.log( 'Field: ' + this.name + ' had hide() called on it.' );
+      this.jQobj().hide();
    };
 
 }
@@ -456,23 +464,38 @@ function Method( name, description, returns, isDataPublication ) {
 
    this.html = function() {
       var markup =   '<div class="horizontaltab" id="' + this.name + '" >' +
-                     '<span class=\'title\'>Method</span>';
-
-      markup += generatePairMarkup( 'Name', this.name );
-      if( $(this).attr('label') != '' )   markup += generatePairMarkup( 'Description', this.description );
-      if( $(this).attr('class') != '' )   markup += generatePairMarkup( 'Returns', this.returns );
-      if( $(this).attr('colName') != '' ) markup += generatePairMarkup( 'Is Data Publication?', this.isDataPublication );
-
-      markup += '</div>';
+                     '<span class="title">fn ' + this.name + '</span>' +
+                     '</div>';
       return markup;
+
+      
 
    };
    this.htmlContainer = function() {
       var markup =   '<div class="vertical_section dynamicshow method ' + this.mother.cssId + '" id="' + this.name + '">' +
-                     '\t<div class="title">Parameter</div>' +
-                     '</div>';
+                     '\t<div class="title">Method</div>';
+
+
+      markup += '<div class="details">';
+      markup += generatePairMarkup( 'Name', this.name );
+      if( $(this).attr('label') != '' )   markup += generatePairMarkup( 'Description', this.description );
+      if( $(this).attr('class') != '' )   markup += generatePairMarkup( 'Returns', this.returns );
+      if( $(this).attr('colName') != '' ) markup += generatePairMarkup( 'Is Data Publication?', this.isDataPublication );
+      markup + '</div>';   // div details
+      
+      markup += '</div>';  // div vertical_section
+
+      this.loadParameters();
       return markup;
    };
+   this.loadParameters = function(){
+      if( this.children ) {
+         for( i=0; i < this.children.length; i++ )
+            this.jQobj().append( this.children[i].html() );
+         this.loadParameters = function(){};
+      }
+   };
+
    this.jQobj = function(){
       if( this.mother ){
          var jQobj = treeBase.mother.jQobj().find('#' + this.name + '.' + this.mother.cssId + '.method.vertical_section');
@@ -494,6 +517,7 @@ function Method( name, description, returns, isDataPublication ) {
       setupTabClickHandler( this );
    };
    this.show = function(){
+      this.loadParameters();
       this.jQobj().show();
    };
    this.hide = function(){
@@ -509,10 +533,12 @@ function Parameter( name, datatype ) {
       var markup =   '<div class="horizontaltab ' + this.mother.name + '" id="' + this.name + '">' +
                      '<span class=\'title\'>Parameter</span>';
 
+      markup += '<div class="details">';
       markup += generatePairMarkup( 'Name', $(this).attr('name') );
       if( $(this).attr('label') != '' )    markup += generatePairMarkup( 'Datatype', $(this).attr('datatype') );
+      markup += '</div>';  // details
 
-      markup += '</div>';
+      markup += '</div>';  //horizontaltab
       return markup;
    };
    // TODO: this object has no vertical_section, so this function should be deprecated
