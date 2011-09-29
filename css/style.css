@@ -211,8 +211,6 @@ td { vertical-align: top; }
    Author: Adam Tait @adamtait
    ========================================================================== */
 html, body {
-	height: 100%;
-	overflow-y: scroll;
 }
 
 /*	URL choice	*/
@@ -328,6 +326,7 @@ button:hover {
 	cursor: pointer;
 }
 .horizontaltab > .title {
+	margin-right: 10px;
 	font-size: 22px;
 	font-weight: bold;
 }
