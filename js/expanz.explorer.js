@@ -295,7 +295,12 @@ function AppSite( id, name, authenticationMode ) {
    this.show = function(){
       this.jQTabObj().toggleClass('clicked');
       this.jQobj().show();
-      $("html,body").animate({ scrollLeft: this.jQobj().position().left, scrollTop: 0 }, "slow");
+      $("html,body").animate(
+                     { 
+                        scrollLeft: this.jQobj().position().left - document.body.clientWidth + this.jQobj().width(),
+                        scrollTop: 0 
+                     }, "slow"
+                     );
    };
    this.hide = function(){
       this.jQobj().hide();
@@ -371,7 +376,12 @@ function Activity( id, name ) {
 
       this.jQTabObj().toggleClass('clicked');
       this.jQobj().show();
-      $("html,body").animate({ scrollLeft: this.jQobj().position().left, scrollTop: 0 }, "slow");
+      $("html,body").animate(
+                     { 
+                        scrollLeft: this.jQobj().position().left - document.body.clientWidth + this.jQobj().width(),
+                        scrollTop: 0 
+                     }, "slow"
+                     );
    };
    this.hide = function(){
       this.jQobj().hide();
@@ -439,7 +449,12 @@ function Field( name, label, className, colName, datatype, value, disabled, null
    this.show = function(){
       this.jQTabObj().toggleClass('clicked');
       this.jQobj().show();
-      $("html,body").animate({ scrollLeft: this.jQobj().position().left, scrollTop: 0 }, "slow");
+      $("html,body").animate(
+                     { 
+                        scrollLeft: this.jQobj().position().left - document.body.clientWidth + this.jQobj().width(),
+                        scrollTop: 0 
+                     }, "slow"
+                     );
    };
    this.hide = function(){
       this.jQobj().hide();
@@ -531,7 +546,12 @@ function Method( name, description, returns, isDataPublication ) {
 
       this.jQTabObj().toggleClass('clicked');
       this.jQobj().show();
-      $("html,body").animate({ scrollLeft: this.jQobj().position().left, scrollTop: 0 }, "slow");
+      $("html,body").animate(
+                     { 
+                        scrollLeft: this.jQobj().position().left - document.body.clientWidth + this.jQobj().width(),
+                        scrollTop: 0 
+                     }, "slow"
+                     );
    };
    this.hide = function(){
       this.jQobj().hide();
