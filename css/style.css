@@ -327,8 +327,6 @@ button:hover {
 }
 .horizontaltab > .title {
 	margin-right: 10px;
-	font-size: 22px;
-	font-weight: bold;
 }
 
 
@@ -358,6 +356,18 @@ button:hover {
 }
 
 
+.title {
+	font-size: 22px;
+	font-weight: bold;
+	line-height: 1.2em;
+}
+.text {
+	font-size: 14px;
+	font-weight: normal;
+	line-height: 0.9em;
+	font-style: normal;
+	text-decoration: none;
+}
 
 
 

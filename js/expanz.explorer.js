@@ -29,7 +29,7 @@ function error( message ){
    $('#error').append( 'Error: ' + message );
 }
 
-var treeBase;
+var treeHead;
 
 /*
  *   Actions
@@ -41,20 +41,26 @@ function ListAvailableSites( fields ){
 
       var endpoint = $('#endpoint').val();
 
-      treeBase = new ExplorerTree(  endpoint.split('/')[0].replace(/\./g, '_'),
-                                    new TreeNode( $('#main')
-                                                   .html('<div id=\'error\'></div>')
-                                                   .css('width','2500px')
-                                                   )
-                                    );
+      treeHead = new TreeNode();
+      treeHead.Section.jQ =   function(){ 
+                                 var jQobj =    $('#main')
+                                                   .html('<div id="error"></div>')
+                                                   .css('width','2500px');
+                                 treeHead.Section.jQ = function(){ return jQobj; };
+                                 return jQobj;
+                              };
+
+      appserver = new Appserver( endpoint.split('/')[0].replace(/\./g, '_') );
+      treeHead.append( appserver );
+      appserver.show();
       
       var url = fields['chosenURLProtocol']() + endpoint;
       var channel = SendGetRequest( url );
 
-      treeBase.channel = channel;
+      appserver.channel = channel;
 
       channel( 'ListAvailableSites',
-               parseListAvailableSitesResponse( ListActivitiesForSite( channel ), treeBase, error ),
+               parseListAvailableSitesResponse( ListActivitiesForSite( channel ), appserver, error ),
 	       error
                );
       return false;
@@ -74,7 +80,7 @@ function ListActivitiesForSite( channel ){
 function GetSchemaForActivity( channel, appsite ){
    return function apply( activity ){
 
-      channel(   'GetSchemaForActivity?site=' + appsite.id + '&activity=' + activity.id,
+      channel(   'GetSchemaForActivity?site=' + appsite.id + '&activity=' + activity.rawId,
          	  parseGetSchemaForActivityResponse( activity, error ),
 		  error
          	  );
@@ -204,192 +210,186 @@ function SendGetRequest( url ){
 
 
 
-function TreeNode( jQobj ) {
-   this.jQobj = function(){ return jQobj; };
-}
+function TreeNode( ) {
+   
+   this.init = function(){};
 
-function ExplorerTree( id, baseTreeNode ) {
-   this.id = id;
-   this.mother = baseTreeNode;
+   this.mother = null;
+   this.children = new Array();
+   this.append = function( child ){
+                        child.mother = this;
+                        this.children.push( child );
+                        child.init( this );
 
-   this.children = [];
-   this.append = function( appsite ){
-                        appsite.mother = this;
-                        this.children.push( appsite );
-
-                        treeBase.mother.jQobj().append( appsite.htmlContainer() );
-                        this.jQobj().append( appsite.html() );
-                        appsite.setupTabClickHandler();
+                        treeHead.Section.jQ().append( child.Section.html() );
+                        this.Section.jQ().append( child.Tab.html() );
+                        child.setupTabClickHandler();
                         };
    this.getChild = function( id ){
       for( i=0; i < this.children.length; i++ )
          if( this.children[i].id == id )
             return this.children[i];
    };
-   this.getAll = function(){ return this.children; };
-
-   // constructor
-   this.mother.jQobj().append(
-            '<div class="vertical_section appserver" id="' + this.id + '">' +
-            '\t<div class="title">Application Sites</div>' +
-            '</div>'
-            );
-   this.jQobj = function(){
-      var jQobj = this.mother.jQobj().find('#' + this.id + '.appserver.vertical_section');
-      this.jQobj = function( obj ){ return function(){ return obj; } }( jQobj );
-      return jQobj;
-   };
-}
-
-function AppSite( id, name, authenticationMode ) {
-   this.id = id;
-   this.name = name;
-   this.authenticationMode = authenticationMode;
-
-   this.children = [];
-   this.append = function( activity ){
-                        activity.mother = this;
-                        this.children.push( activity );
-
-                        treeBase.mother.jQobj().append( activity.htmlContainer() );
-                        this.jQobj().append( activity.html() );
-                        activity.setupTabClickHandler();
-                        };
-   this.getChild = function( id ){
-      for( i=0; i < this.children.length; i++ )
-         if( this.children[i].cssId == id )
-            return this.children[i];
-      return { id: '' };
-   };
-   this.getAll = function(){ return this.children; };
-
-   this.html = function() {
-      var markup =   '<div class="horizontaltab" id="' + this.id + '">' +
-                     '\t<span class="title">' + this.name + '</span>' +
-                     '</div>';
-      return markup;
-   };
-   this.htmlContainer = function(){
-      var markup =   '<div class="vertical_section dynamicshow appsite" id="' + this.id + '">' +
-                     '\t<div class="title">Activities</div>' +
-                     '</div>';
-      return markup;
-   };
-   this.jQobj = function(){
-      if( this.mother ){
-         var jQobj = treeBase.mother.jQobj().find('#' + this.id + '.appsite.vertical_section');
-         this.jQobj = function( obj ){ return function(){ return obj; } }( jQobj );
-         return jQobj;
-      }
-      return $('#' + this.id + '.appsite.vertical_section');
-      };
-   this.jQTabObj = function(){
-      var jQobj = this.mother.jQobj().find( '#' + this.id + '.horizontaltab' );
-      this.jQTabObj = function( obj ){ return function(){ return obj; } }( jQobj );
-      return jQobj;
-   };
+   this.getAll =  function(){ 
+                     if( this.children.length < 1 )   this.load();
+                     return this.children;
+                  };
+   this.load = function(){};
+   
+   this.Tab = {
+               jQ: function(){},
+               html: function(){}
+               };
+   this.Section = {
+               jQ: function(){},
+               html: function(){}
+               };
 
    this.setupTabClickHandler = function(){
       setupTabClickHandler( this );
    };
    this.show = function(){
-      this.jQTabObj().toggleClass('clicked');
-      this.jQobj().show();
+      if( this.children.length < 1 )   this.load();
+
+      this.Tab.jQ().toggleClass('clicked');
+      this.Section.jQ().show();
       $("html,body").animate(
                      { 
-                        scrollLeft: this.jQobj().position().left - document.body.clientWidth + this.jQobj().width(),
+                        scrollLeft: this.Section.jQ().position().left - document.body.clientWidth + this.Section.jQ().width(),
                         scrollTop: 0 
                      }, "slow"
                      );
    };
    this.hide = function(){
-      this.jQobj().hide();
-      this.jQTabObj().toggleClass('clicked');
+      this.Section.jQ().hide();
+      this.Tab.jQ().toggleClass('clicked');
    };
 
 }
 
-function Activity( id, name ) {
+
+function Tab( mother, id, cls, title, secondTitle ) {
+      this.mother = mother;
+      this.id = id;
+      this.cls = cls;
+      this.title = title;
+      this.secondTitle = secondTitle;
+
+      this.jQ =  function(){
+                        if( this.mother ){
+                           var jQobj = this.mother.Section.jQ().find( '#' + this.id + '.horizontaltab' );
+                           this.jQ = function( obj ){ return function(){ return obj; } }( jQobj );
+                           return jQobj;
+                        }
+                        return $( '#' + this.id + '.horizontaltab' );
+                  };
+      this.html = function(){
+                        var markup = '<div class="horizontaltab';
+                        markup += this.cls? ' ' + this.cls: ''; 
+                        markup +=   '" id="' + this.id + '">' +
+                                    '\t<span class="title">' + this.title + '</span>';
+                        markup += this.secondTitle? '\t<span class="text">' + this.secondTitle + '</span>': '';
+                        markup += '</div>';
+                        return markup;
+                  };
+}
+
+function Section( mother, id, cls, title ) {
+      this.mother = mother;
+      this.id = id;
+      this.cls = cls;
+      this.title = title;
+
+      this.jQ = function(){ 
+                  var jQobj = $('#' + this.id + '.' + this.mother.id + '.' + this.cls + '.vertical_section');
+                  if( jQobj ){
+                     this.jQ = function(){
+
+                        //if( this.mother ){
+                        //   var jQobj = treeHead.Section.jQ().find('#' + id + '.' + cls + '.vertical_section');
+                        //   this.jQobj = function( obj ){ return function(){ return obj; } }( jQobj );
+                        //   return jQobj;
+                        //}
+                        return jQobj;
+                     };
+                     return jQobj;
+                  }
+                  return $('#' + this.id + this.cls + '.vertical_section');
+               };
+      this.html = function( contents ){
+                           var results = '<div class="vertical_section dynamicshow ' + this.cls + ' ' + this.mother.id + '" id="' + this.id + '">' +
+                                    '\t<div class="title">' + this.title + '</div>';
+                           results += contents? contents: '';
+                           results += '</div>';
+                           return results;
+                  };
+      this.append =  function( contents ){
+                        this.htmlold = this.html;
+                        this.html = function( moreContents ){
+                                       return moreContents? this.htmlold( contents + moreContents ):
+                                                            this.htmlold( contents );
+                                    };
+                     };
+}
+
+
+
+
+Appserver.prototype = new TreeNode();
+function Appserver( id ) {
+   this.id = id;
+
+   this.children = new Array();
+
+   // constructor
+   this.init = function( mother ){
+      this.mother = mother;
+      this.Section = new Section( this.mother, this.id, 'appserver', 'Application Sites' );
+      this.Tab = { jQ: this.Section.jQ, html: function(){} };
+   };
+
+   this.setupTabClickHandler = function(){};
+   this.show = function(){
+      this.Section.jQ().show();
+   };
+}
+
+AppSite.prototype = new TreeNode();
+function AppSite( id, name, authenticationMode ) {
    this.id = id;
    this.name = name;
+   this.authenticationMode = authenticationMode;
 
-   this.cssId = id.replace(/\./g, '_');
+   this.children = new Array();
 
-   this.children = [];
-   this.append = function( field ){
-                     field.mother = this;
-                     this.children.push( field );
-
-                     treeBase.mother.jQobj().append( field.htmlContainer() );
-                     this.jQobj().append( field.html() );
-                     field.setupTabClickHandler();
-                     };
-   this.getAll = function(){ 
-      if( this.children.length < 1 )   this.load();
-      return this.children;
+   this.init = function( mother ){
+      this.mother = mother;
+      this.Section = new Section( this.mother, this.id, 'appsite', 'Activities' );
+      this.Tab = new Tab( this.mother, this.id, 'appsite', this.name );
    };
-   this.getChild = function( name ){
-      if( this.children.length < 1 )   this.load();
-      for( i=0; i < this.children.length; i++)
-         if( this.children[i].name = name )
-            return this.children[i];
-      return { name: '' };
-   }
+}
+
+Activity.prototype = new TreeNode();
+function Activity( id, name ) {
+   this.rawId = id;
+   this.name = name;
+   this.id = id.replace(/\./g, '_');
+
+   this.children = new Array();
 
    this.load = function() {
       GetSchemaForActivity( this.channel, this.mother )( this );
       return true;
    };
 
-   this.html = function(){
-      var markup =   '<div class=\'horizontaltab\' id=\'' + this.cssId + '\'>' +
-                     '\t<span class=\'title\'>' + this.name + '</span>' +
-                     '\t<span class=\'id\'>' + this.id + '</span>' +
-                     '</div>';
-      return markup;
+   this.init = function( mother ){
+      this.mother = mother;
+      this.Section = new Section( this.mother, this.id, 'activity', 'Fields' );
+      this.Tab = new Tab( this.mother, this.id, 'activity', this.name, '(' + this.rawId + ')' );
    };
-   this.htmlContainer = function(){
-      var markup =   '<div class="vertical_section dynamicshow activity ' + this.mother.id + '" id="' + this.cssId + '">' +
-                     '\t<div class="title">Fields</div>' +
-                     '</div>';
-      return markup;
-   }
-   this.jQobj = function(){
-      if( this.mother ){
-         var jQobj = treeBase.mother.jQobj().find('#' + this.cssId + '.' + this.mother.id + '.activity.vertical_section');
-         this.jQobj = function( obj ){ return function(){ return obj; } }( jQobj );
-         return jQobj;
-      }
-      return $('#' + this.cssId + '.activity.vertical_section');
-      };
-   this.jQTabObj = function(){
-      var jQobj = this.mother.jQobj().find( '#' + this.cssId + '.horizontaltab' );
-      this.jQTabObj = function( obj ){ return function(){ return obj; } }( jQobj );
-      return jQobj;
-   };
-
-   this.setupTabClickHandler = function(){
-      setupTabClickHandler( this );
-   };
-   this.show = function(){
-      if( this.children.length < 1 )   this.load();
-
-      this.jQTabObj().toggleClass('clicked');
-      this.jQobj().show();
-      $("html,body").animate(
-                     { 
-                        scrollLeft: this.jQobj().position().left - document.body.clientWidth + this.jQobj().width(),
-                        scrollTop: 0 
-                     }, "slow"
-                     );
-   };
-   this.hide = function(){
-      this.jQobj().hide();
-      this.jQTabObj().toggleClass('clicked');
-   };
-   
 }
 
+Field.prototype = new TreeNode();
 function Field( name, label, className, colName, datatype, value, disabled, nullValue, valid ){
    this.name = name;
    this.label = label;
@@ -401,205 +401,119 @@ function Field( name, label, className, colName, datatype, value, disabled, null
    this.nullValue = nullValue;
    this.valid = valid;
 
-   this.html = function(){
-      var markup =   '<div class="horizontaltab" id="' + this.name + '" >' +
-                     '<span class="title">+' + this.name + '</span>' +
-                     '</div>';
-      return markup;
-   };
+   this.children = new Array();
 
-   this.htmlContainer = function(){
-      var markup =   '<div class="vertical_section dynamicshow field ' + this.mother.cssId + '" id="' + this.name + '" >' +
-                     '<div class=\'title\'>Field</div>';
-                  
-      markup += generatePairMarkup( 'Name', this.name );
-      if( $(this).attr('label') != '' )      markup += generatePairMarkup( 'Label', this.label );
-      if( $(this).attr('class') != '' )      markup += generatePairMarkup( 'Class', this.className );
-      if( $(this).attr('colName') != '' )    markup += generatePairMarkup( 'ColumnName', this.colName );
-      if( $(this).attr('datatype') != '' )   markup += generatePairMarkup( 'Datatype', this.datatype );
-      if( $(this).attr('value') != '' )      markup += generatePairMarkup( 'Value', this.value );
-      if( $(this).attr('disabled') != '' )   markup += generatePairMarkup( 'Disabled?', this.disabled );
-      if( $(this).attr('null') != '' )       markup += generatePairMarkup( 'Null Value', this.nulValue);
-      if( $(this).attr('valid') != '' )      markup += generatePairMarkup( 'Valid', this.valid );
+   this.init = function( mother ){
+      this.mother = mother;
+      this.Section = new Section( this.mother, name, 'field', 'Field' );
+      this.Tab = new Tab( this.mother, this.name, 'field', this.name );
 
-      markup += '</div>';
-      return markup;
-   };
-   
-   this.jQobj = function(){
-      if( this.mother ){
-         var jQobj = treeBase.mother.jQobj().find('#' + this.name + '.' + this.mother.cssId + '.field.vertical_section');
-         this.jQobj = function( obj ){ return function(){ return obj; } }( jQobj );
-         return jQobj;
-      }
-      return $('#' + this.name + '.field.vertical_section');
-      };
-   this.jQTabObj = function(){
-      var jQobj = this.mother.jQobj().find( '#' + this.name + '.horizontaltab' );
-      if( jQobj ){
-         this.jQTabObj = function( obj ){ return function(){ return obj; } }( jQobj );
-         return jQobj;
-      }
-      return $( '#' + this.name + '.horizontaltab' );
-   };
-
-   this.setupTabClickHandler = function(){
-      setupTabClickHandler( this );
-   };
-   this.show = function(){
-      this.jQTabObj().toggleClass('clicked');
-      this.jQobj().show();
-      $("html,body").animate(
-                     { 
-                        scrollLeft: this.jQobj().position().left - document.body.clientWidth + this.jQobj().width(),
-                        scrollTop: 0 
-                     }, "slow"
-                     );
-   };
-   this.hide = function(){
-      this.jQobj().hide();
-      this.jQTabObj().toggleClass('clicked');
+      this.Section.append( fieldPreviewMarkup( this ) );
    };
 
 }
 
 
+function fieldPreviewMarkup( field ){
+      var markup = generatePairMarkup( 'Name', field.name );
+      if( $(field).attr('label') != '' )      markup += generatePairMarkup( 'Label', field.label );
+      if( $(field).attr('class') != '' )      markup += generatePairMarkup( 'Class', field.className );
+      if( $(field).attr('colName') != '' )    markup += generatePairMarkup( 'ColumnName', field.colName );
+      if( $(field).attr('datatype') != '' )   markup += generatePairMarkup( 'Datatype', field.datatype );
+      if( $(field).attr('value') != '' )      markup += generatePairMarkup( 'Value', field.value );
+      if( $(field).attr('disabled') != '' )   markup += generatePairMarkup( 'Disabled?', field.disabled );
+      if( $(field).attr('null') != '' )       markup += generatePairMarkup( 'Null Value', field.nulValue);
+      if( $(field).attr('valid') != '' )      markup += generatePairMarkup( 'Valid', field.valid );
+
+      markup += '</div>';
+      return markup;
+}
+   
+
+Method.prototype = new TreeNode();
 function Method( name, description, returns, isDataPublication ) {
    this.name = name;
    this.description = description;
    this.returns = returns;
    this.isDataPublication = isDataPublication;
 
-   this.children = [];
-   this.append = function( parameter ){
-                           parameter.mother = this;
-                           this.children.push( parameter );
+   this.children = new Array();
 
-                           this.jQobj().append( parameter.html() );
-                           parameter.setupTabClickHandler();
-                           };
-   this.getChild = function( name ){
-      for( i=0; i < this.children.length; i++ )
-         if( this.children[i].name == name )
-            return this.children[i];
-      return { name: '' };
+   this.init = function( mother ){
+      this.mother = mother;
+
+      this.Section = new Section( this.mother, this.name, 'method', 'Method' );
+      this.Tab = new Tab( this.mother, this.name, 'method', this.name );
+
+      this.Section.append( methodPreviewMarkup( this ) );
    };
-   this.getAll = function(){ return this.children; };
 
+   this.append = function( child ){
+                        child.mother = this;
+                        this.children.push( child );
+                        child.init( this );
 
-   this.html = function() {
-      var markup =   '<div class="horizontaltab" id="' + this.name + '" >' +
-                     '<span class="title">fn ' + this.name + '</span>' +
-                     '</div>';
-      return markup;
-
-      
-
-   };
-   this.htmlContainer = function() {
-      var markup =   '<div class="vertical_section dynamicshow method ' + this.mother.cssId + '" id="' + this.name + '">' +
-                     '\t<div class="title">Method</div>';
-
-
-      markup += '<div class="details">';
-      markup += generatePairMarkup( 'Name', this.name );
-      if( $(this).attr('label') != '' )   markup += generatePairMarkup( 'Description', this.description );
-      if( $(this).attr('class') != '' )   markup += generatePairMarkup( 'Returns', this.returns );
-      if( $(this).attr('colName') != '' ) markup += generatePairMarkup( 'Is Data Publication?', this.isDataPublication );
-      markup + '</div>';   // div details
-      
-      markup += '</div>';  // div vertical_section
-
-      this.loadParameters();
-      return markup;
-   };
-   this.loadParameters = function(){
+                        this.Section.jQ().append( child.Tab.html() );
+                        child.setupTabClickHandler();
+                        };
+   
+   function loadParameters (){
       if( this.children ) {
          for( i=0; i < this.children.length; i++ )
-            this.jQobj().append( this.children[i].html() );
+            this.Section.jQ().append( this.children[i].html() );
          this.loadParameters = function(){};
       }
    };
 
-   this.jQobj = function(){
-      if( this.mother ){
-         var jQobj = treeBase.mother.jQobj().find('#' + this.name + '.' + this.mother.cssId + '.method.vertical_section');
-         this.jQobj = function( obj ){ return function(){ return obj; } }( jQobj );
-         return jQobj;
-      }
-      return $('#' + this.name + '.method.vertical_section');
-      };
-   this.jQTabObj = function(){
-      var jQobj = this.mother.jQobj().find( '#' + this.name + '.horizontaltab' );
-      if( jQobj ){
-         this.jQTabObj = function( obj ){ return function(){ return obj; } }( jQobj );
-         return jQobj;
-      }
-      return $( '#' + this.name + '.horizontaltab' );
-   };
-
-   this.setupTabClickHandler = function(){
-      setupTabClickHandler( this );
-   };
-   this.show = function(){
-      this.loadParameters();
-
-      this.jQTabObj().toggleClass('clicked');
-      this.jQobj().show();
-      $("html,body").animate(
-                     { 
-                        scrollLeft: this.jQobj().position().left - document.body.clientWidth + this.jQobj().width(),
-                        scrollTop: 0 
-                     }, "slow"
-                     );
-   };
-   this.hide = function(){
-      this.jQobj().hide();
-      this.jQTabObj().toggleClass('clicked');
-   };
+   //this.show = function(){
+   //   loadParameters();
+   //   this.prototype.show();
+   //};
 }
 
+function methodPreviewMarkup( method ) {
+
+      var markup = '<div class="details">';
+      markup += generatePairMarkup( 'Name', method.name );
+      if( $(method).attr('label') != '' )   markup += generatePairMarkup( 'Description', method.description );
+      if( $(method).attr('class') != '' )   markup += generatePairMarkup( 'Returns', method.returns );
+      if( $(method).attr('colName') != '' ) markup += generatePairMarkup( 'Is Data Publication?', method.isDataPublication );
+      markup + '</div>';   // div details
+      
+      return markup;
+};
+
+Parameter.prototype = new TreeNode();
 function Parameter( name, datatype ) {
    this.name = name;
    this.datatype = datatype;
 
-   this.html = function(){
-      var markup =   '<div class="horizontaltab ' + this.mother.name + '" id="' + this.name + '">' +
-                     '<span class=\'title\'>Parameter</span>';
+   this.children = new Array();
 
+   this.init = function( mother ){
+      this.mother = mother;
+      this.Tab = new Tab( this.mother, this.name + '.' + this.mother.name, 'Parameter', this.name );
+      this.Tab.jQ().append( parameterPreviewMarkup( this ) );
+   
+      // TODO: this object has no vertical_section, so this function should be deprecated
+      this.Section.jQ = function(){};
+      this.Section.html = function(){};
+      
+   };
+      
+   function parameterPreviewMarkup( parameter ){
       markup += '<div class="details">';
-      markup += generatePairMarkup( 'Name', $(this).attr('name') );
-      if( $(this).attr('label') != '' )    markup += generatePairMarkup( 'Datatype', $(this).attr('datatype') );
+      markup += generatePairMarkup( 'Name', $(parameter).attr('name') );
+      if( $(parameter).attr('label') != '' )    markup += generatePairMarkup( 'Datatype', $(parameter).attr('datatype') );
       markup += '</div>';  // details
 
-      markup += '</div>';  //horizontaltab
       return markup;
    };
-   // TODO: this object has no vertical_section, so this function should be deprecated
-   this.jQobj = function(){
-      if( this.mother ){
-         var jQobj = this.mother.jQobj().find('#' + this.id + '.parameter');
-         this.jQobj = function( obj ){ return function(){ return obj; } }( jQobj );
-         return jQobj;
-      }
-      return $('#' + this.id + '.parameter');
-      };
-   this.jQTabObj = function(){
-      var jQobj = this.mother.jQobj().find( '#' + this.name + '.' + this.mother.name + '.horizontaltab' );
-      this.jQTabObj = function( obj ){ return function(){ return obj; } }( jQobj );
-      return jQobj;
-   };
-
-   this.setupTabClickHandler = function(){
-      console.log( 'Parameter: ' + this.name + ' had setupTabClickHandler() called on it.' );
-   };
-   this.show = function(){
-      console.log( 'Parameter: ' + this.name + ' had show() called on it.' );
-   };
-   this.hide = function(){
-      console.log( 'Parameter: ' + this.name + ' had hide() called on it.' );
-   };
 }
+
+
+
+
 
 
 
@@ -619,7 +533,7 @@ function generatePairMarkup( key, value ){
 var currentDisplay = [];
 
 function setupTabClickHandler( node ){
-   node.jQTabObj().click( function(){
+   node.Tab.jQ().click( function(){
       var verticalsToDrop = currentDisplay.length;
       
       if( $(this).parent().hasClass('appsite') )  verticalsToDrop -= 1;
