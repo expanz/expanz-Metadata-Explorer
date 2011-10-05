@@ -30,6 +30,7 @@ function error( message ){
 }
 
 var treeHead;
+var previewpane;
 
 /*
  *   Actions
@@ -44,8 +45,7 @@ function ListAvailableSites( fields ){
       treeHead = new TreeNode();
       treeHead.Section.jQ =   function(){ 
                                  var jQobj =    $('#main')
-                                                   .html('<div id="error"></div>')
-                                                   .css('width','2500px');
+                                                   .html('<div id="error"></div>');
                                  treeHead.Section.jQ = function(){ return jQobj; };
                                  return jQobj;
                               };
@@ -53,6 +53,9 @@ function ListAvailableSites( fields ){
       appserver = new Appserver( endpoint.split('/')[0].replace(/\./g, '_') );
       treeHead.append( appserver );
       appserver.show();
+
+      previewpane = new PreviewPane( treeHead );
+      treeHead.Section.jQ().append( previewpane.html() );
       
       var url = fields['chosenURLProtocol']() + endpoint;
       var channel = SendGetRequest( url );
@@ -255,7 +258,7 @@ function TreeNode( ) {
       this.Section.jQ().show();
       $("html,body").animate(
                      { 
-                        scrollLeft: this.Section.jQ().position().left - document.body.clientWidth + this.Section.jQ().width(),
+                        scrollLeft: $('#main').css('width'),   //this.Section.jQ().position().left - document.body.clientWidth + this.Section.jQ().width(),
                         scrollTop: 0 
                      }, "slow"
                      );
@@ -304,12 +307,6 @@ function Section( mother, id, cls, title ) {
                   var jQobj = $('#' + this.id + '.' + this.mother.id + '.' + this.cls + '.vertical_section');
                   if( jQobj ){
                      this.jQ = function(){
-
-                        //if( this.mother ){
-                        //   var jQobj = treeHead.Section.jQ().find('#' + id + '.' + cls + '.vertical_section');
-                        //   this.jQobj = function( obj ){ return function(){ return obj; } }( jQobj );
-                        //   return jQobj;
-                        //}
                         return jQobj;
                      };
                      return jQobj;
@@ -317,11 +314,11 @@ function Section( mother, id, cls, title ) {
                   return $('#' + this.id + this.cls + '.vertical_section');
                };
       this.html = function( contents ){
-                           var results = '<div class="vertical_section dynamicshow ' + this.cls + ' ' + this.mother.id + '" id="' + this.id + '">' +
+                           var markup = '<div class="vertical_section dynamicshow ' + this.cls + ' ' + this.mother.id + '" id="' + this.id + '">' +
                                     '\t<div class="title">' + this.title + '</div>';
-                           results += contents? contents: '';
-                           results += '</div>';
-                           return results;
+                           markup += contents? contents: '';
+                           markup += '</div>';
+                           return markup;
                   };
       this.append =  function( contents ){
                         this.htmlold = this.html;
@@ -332,6 +329,59 @@ function Section( mother, id, cls, title ) {
                      };
 }
 
+function PreviewPane( container ) {
+   this.container = container;
+
+   this.jQ = function(){ 
+                  var jQobj = this.container.Section.jQ().find('#previewpane.vertical_section');
+                  if( jQobj ){
+                     this.jQ = function(){
+                        return jQobj;
+                     };
+                     return jQobj;
+                  }
+                  return $('#previewpane');
+               };
+
+
+   var htmlTitle = '\t<div class="title">Preview Pane</div>';
+
+   this.html = function(){
+      var markup =   '<div id="previewpane" class="vertical_section dynamicshow pane">';
+      markup +=      htmlTitle;
+      markup +=      '</div>';   // previewpane
+
+      return markup;
+   };
+   
+   this.appendCode = function( id, title, contents ){
+
+      var markup =      '\t\t<div class="code" id="' + id + '">';
+      markup +=         '\t\t<div class="title">' + title + '</div>';
+      markup +=         '\t\t\t<textarea rows="10" cols="100">';
+      markup +=         contents;
+      markup +=         '\t\t\t</textarea>';
+      markup +=         '\t\t</div>';  //code
+
+      this.jQ().append( markup );
+   };
+
+   this.clear = function(){
+      this.jQ().html( htmlTitle );
+   };
+
+   this.visible = false;
+   this.show = function(){
+      this.jQ().show();
+      this.visible = true;
+   };
+   this.hide = function(){
+      this.jQ().hide();
+      this.visible = false;
+      this.clear();
+   };
+
+}
 
 Appserver.prototype = new TreeNode();
 function Appserver( id ) {
@@ -421,6 +471,31 @@ function Field( name, label, className, colName, datatype, value, disabled, null
 
       markup += '</div>';
       return markup;
+   };
+
+   this.jsSdkCode = function(){
+
+      var code =  '<div class="errorContainer">\n';
+      code +=     '\t<span class="error" data-bind="text: ' + this.name + '.error"></span>\n';
+      code +=     '</div>\n';
+      code +=     '\n';
+      code +=     '<div class="textinput">\n';
+      code +=     '\t<span class="label" data-bind="text: ' + this.name + '.label"></span>\n';
+      code +=     '\t<input type="text" data-bind="value: ' + this.name + '.value" />\n';
+      code +=     '</div>\n';
+
+      return code;
+   };
+
+
+   this.show = function(){
+      this.__proto__.show.call(this);
+      previewpane.show();
+      previewpane.appendCode( this.name, 'JavaScript SDK: ' + this.name, this.jsSdkCode() );
+   };
+   this.hide = function(){
+      this.__proto__.hide.call(this);
+      previewpane.hide();
    };
 }
    
@@ -527,6 +602,10 @@ function setupTabClickHandler( node ){
 
       currentDisplay.push( node );
       node.show();
+
+      var screenWidth = (currentDisplay.length +1) * 400;
+      if( previewpane.visible )  screenWidth += 850;
+      $('#main').css('width', screenWidth.toString() + 'px');
    });
 }
 

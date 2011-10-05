@@ -310,6 +310,23 @@ button:hover {
 	font-size: 28px;
 	font-weight: bold;
 }
+.pane {
+	float: right;
+	width: 800px;
+	margin-left: 50px;
+}
+.pane > .title {
+	border-right-style: none;
+	border-left-style: solid;
+	border-left-width: 3px;
+}
+
+.code {
+	margin: 20px 20px 0px;
+}
+.code > .title {
+	margin: 10px 5px;
+}
 
 .horizontaltab {
 	min-height: 30px;
