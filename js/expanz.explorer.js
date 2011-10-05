@@ -337,9 +337,8 @@ function Section( mother, id, cls, title ) {
 
 Appserver.prototype = new TreeNode();
 function Appserver( id ) {
+   TreeNode.call(this);
    this.id = id;
-
-   this.children = new Array();
 
    // constructor
    this.init = function( mother ){
@@ -356,11 +355,11 @@ function Appserver( id ) {
 
 AppSite.prototype = new TreeNode();
 function AppSite( id, name, authenticationMode ) {
+   TreeNode.call(this);
+
    this.id = id;
    this.name = name;
    this.authenticationMode = authenticationMode;
-
-   this.children = new Array();
 
    this.init = function( mother ){
       this.mother = mother;
@@ -371,11 +370,11 @@ function AppSite( id, name, authenticationMode ) {
 
 Activity.prototype = new TreeNode();
 function Activity( id, name ) {
+   TreeNode.call(this);
+
    this.rawId = id;
    this.name = name;
    this.id = id.replace(/\./g, '_');
-
-   this.children = new Array();
 
    this.load = function() {
       GetSchemaForActivity( this.channel, this.mother )( this );
@@ -391,6 +390,8 @@ function Activity( id, name ) {
 
 Field.prototype = new TreeNode();
 function Field( name, label, className, colName, datatype, value, disabled, nullValue, valid ){
+   TreeNode.call(this);
+
    this.name = name;
    this.label = label;
    this.className = className;
@@ -401,43 +402,39 @@ function Field( name, label, className, colName, datatype, value, disabled, null
    this.nullValue = nullValue;
    this.valid = valid;
 
-   this.children = new Array();
-
    this.init = function( mother ){
       this.mother = mother;
       this.Section = new Section( this.mother, name, 'field', 'Field' );
       this.Tab = new Tab( this.mother, this.name, 'field', this.name );
 
-      this.Section.append( fieldPreviewMarkup( this ) );
+      this.Section.append( this.previewMarkup() );
    };
 
-}
-
-
-function fieldPreviewMarkup( field ){
-      var markup = generatePairMarkup( 'Name', field.name );
-      if( $(field).attr('label') != '' )      markup += generatePairMarkup( 'Label', field.label );
-      if( $(field).attr('class') != '' )      markup += generatePairMarkup( 'Class', field.className );
-      if( $(field).attr('colName') != '' )    markup += generatePairMarkup( 'ColumnName', field.colName );
-      if( $(field).attr('datatype') != '' )   markup += generatePairMarkup( 'Datatype', field.datatype );
-      if( $(field).attr('value') != '' )      markup += generatePairMarkup( 'Value', field.value );
-      if( $(field).attr('disabled') != '' )   markup += generatePairMarkup( 'Disabled?', field.disabled );
-      if( $(field).attr('null') != '' )       markup += generatePairMarkup( 'Null Value', field.nulValue);
-      if( $(field).attr('valid') != '' )      markup += generatePairMarkup( 'Valid', field.valid );
+   this.previewMarkup = function(){
+      var markup = generatePairMarkup( 'Name', this.name );
+      if( this.label != '' )      markup += generatePairMarkup( 'Label', this.label );
+      if( this.className != '' )      markup += generatePairMarkup( 'Class', this.className );
+      if( this.colName != '' )    markup += generatePairMarkup( 'ColumnName', this.colName );
+      if( this.datatype != '' )   markup += generatePairMarkup( 'Datatype', this.datatype );
+      if( this.value != '' )      markup += generatePairMarkup( 'Value', this.value );
+      if( this.disabled != '' )   markup += generatePairMarkup( 'Disabled?', this.disabled );
+      if( this.nullValue != '' )       markup += generatePairMarkup( 'Null Value', this.nulValue);
+      if( this.valid != '' )      markup += generatePairMarkup( 'Valid', this.valid );
 
       markup += '</div>';
       return markup;
+   };
 }
    
 
 Method.prototype = new TreeNode();
 function Method( name, description, returns, isDataPublication ) {
+   TreeNode.call(this);
+
    this.name = name;
    this.description = description;
    this.returns = returns;
    this.isDataPublication = isDataPublication;
-
-   this.children = new Array();
 
    this.init = function( mother ){
       this.mother = mother;
@@ -445,7 +442,7 @@ function Method( name, description, returns, isDataPublication ) {
       this.Section = new Section( this.mother, this.name, 'method', 'Method' );
       this.Tab = new Tab( this.mother, this.name, 'method', this.name );
 
-      this.Section.append( methodPreviewMarkup( this ) );
+      this.Section.append( this.previewMarkup( this ) );
    };
 
    this.append = function( child ){
@@ -456,44 +453,30 @@ function Method( name, description, returns, isDataPublication ) {
                         this.Section.jQ().append( child.Tab.html() );
                         child.setupTabClickHandler();
                         };
-   
-   function loadParameters (){
-      if( this.children ) {
-         for( i=0; i < this.children.length; i++ )
-            this.Section.jQ().append( this.children[i].html() );
-         this.loadParameters = function(){};
-      }
-   };
-
-   //this.show = function(){
-   //   loadParameters();
-   //   this.prototype.show();
-   //};
-}
-
-function methodPreviewMarkup( method ) {
+   this.previewMarkup = function() {
 
       var markup = '<div class="details">';
-      markup += generatePairMarkup( 'Name', method.name );
-      if( $(method).attr('label') != '' )   markup += generatePairMarkup( 'Description', method.description );
-      if( $(method).attr('class') != '' )   markup += generatePairMarkup( 'Returns', method.returns );
-      if( $(method).attr('colName') != '' ) markup += generatePairMarkup( 'Is Data Publication?', method.isDataPublication );
+      markup += generatePairMarkup( 'Name', this.name );
+      if( this.description != '' )   markup += generatePairMarkup( 'Description', this.description );
+      if( this.returns != '' )   markup += generatePairMarkup( 'Returns', this.returns );
+      if( this.isDataPublication != '' ) markup += generatePairMarkup( 'Is Data Publication?', this.isDataPublication );
       markup + '</div>';   // div details
       
       return markup;
-};
+   };
+}
 
 Parameter.prototype = new TreeNode();
 function Parameter( name, datatype ) {
+   TreeNode.call(this);
+
    this.name = name;
    this.datatype = datatype;
-
-   this.children = new Array();
 
    this.init = function( mother ){
       this.mother = mother;
       this.Tab = new Tab( this.mother, this.name + '.' + this.mother.name, 'Parameter', this.name );
-      this.Tab.jQ().append( parameterPreviewMarkup( this ) );
+      this.Tab.jQ().append( this.previewMarkup() );
    
       // TODO: this object has no vertical_section, so this function should be deprecated
       this.Section.jQ = function(){};
@@ -501,10 +484,10 @@ function Parameter( name, datatype ) {
       
    };
       
-   function parameterPreviewMarkup( parameter ){
+   this.previewMarkup = function(){
       markup += '<div class="details">';
-      markup += generatePairMarkup( 'Name', $(parameter).attr('name') );
-      if( $(parameter).attr('label') != '' )    markup += generatePairMarkup( 'Datatype', $(parameter).attr('datatype') );
+      markup += generatePairMarkup( 'Name', this.name );
+      if( this.datatype != '' )    markup += generatePairMarkup( 'Datatype', thisdatatype );
       markup += '</div>';  // details
 
       return markup;
