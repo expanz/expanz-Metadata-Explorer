@@ -333,8 +333,6 @@ function Section( mother, id, cls, title ) {
 }
 
 
-
-
 Appserver.prototype = new TreeNode();
 function Appserver( id ) {
    TreeNode.call(this);
@@ -485,9 +483,9 @@ function Parameter( name, datatype ) {
    };
       
    this.previewMarkup = function(){
-      markup += '<div class="details">';
+      var markup = '<div class="details">';
       markup += generatePairMarkup( 'Name', this.name );
-      if( this.datatype != '' )    markup += generatePairMarkup( 'Datatype', thisdatatype );
+      if( this.datatype != '' )    markup += generatePairMarkup( 'Datatype', this.datatype );
       markup += '</div>';  // details
 
       return markup;
