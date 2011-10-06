@@ -487,11 +487,29 @@ function Field( name, label, className, colName, datatype, value, disabled, null
       return code;
    };
 
+   this.flexSdkCode = function(){
+
+      var code =  '<controls:LabelEx fieldId="' + this.name + '" />\n';
+      code +=     '<controls:TextInputEx fieldId="' + this.name + '" />';
+
+      return code;
+   };
+
+   this.wp7SdkCode = function(){
+
+      var code =  '<ec:LabelEx FieldId="' + this.name + '" />\n';
+      code +=     '<ec:TextBoxEx FieldId="' + this.name + '" />';
+
+      return code;
+   };
+
 
    this.show = function(){
       this.__proto__.show.call(this);
       previewpane.show();
       previewpane.appendCode( this.name, 'JavaScript SDK: ' + this.name, this.jsSdkCode() );
+      previewpane.appendCode( this.name, 'Flex/ActionScript SDK: ' + this.name, this.flexSdkCode() );
+      previewpane.appendCode( this.name, 'Silverlight/Windows-Phone-7 SDK: ' + this.name, this.wp7SdkCode() );
    };
    this.hide = function(){
       this.__proto__.hide.call(this);
@@ -536,6 +554,47 @@ function Method( name, description, returns, isDataPublication ) {
       markup + '</div>';   // div details
       
       return markup;
+   };
+
+   this.jsSdkCode = function(){
+
+      var code =  '<script type="text/javascript">\n' +
+                  '\tfunction mySuccessFunction(){}\n' +
+                  '\tfunction myErrorFunction( text ){\n' +
+                  '\t\t//handle an error\n' +
+                  '\t}\n' +
+                  '</script>';
+      code += '\t<button method-name="'+ this.name + '"\n' +
+                  '\t\tdata-bind="click: Method"\n' + 
+                  '\t\tonSuccess="mySuccessFunction" onError="myErrorFunction"\n'+
+                  '\t>' + this.name + '</button>' +
+                  '</div>';
+      return code;
+   };
+
+   this.flexSdkCode = function(){
+
+      var code =  '<buttons:ButtonEx label="' + this.name + '" MethodName="' + this.name + '"/>';
+      return code;
+   };
+
+   this.wp7SdkCode = function(){
+
+      var code =  '<ec:ButtonEx Content="' + this.name + '" MethodName="' + this.name + '"/>';
+      return code;
+   };
+
+
+   this.show = function(){
+      this.__proto__.show.call(this);
+      previewpane.show();
+      previewpane.appendCode( this.name, 'JavaScript SDK: ' + this.name, this.jsSdkCode() );
+      previewpane.appendCode( this.name, 'Flex/ActionScript SDK: ' + this.name, this.flexSdkCode() );
+      previewpane.appendCode( this.name, 'Silverlight/Windows-Phone-7 SDK: ' + this.name, this.wp7SdkCode() );
+   };
+   this.hide = function(){
+      this.__proto__.hide.call(this);
+      previewpane.hide();
    };
 }
 
