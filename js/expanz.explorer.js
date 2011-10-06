@@ -563,12 +563,12 @@ function Method( name, description, returns, isDataPublication ) {
                   '\tfunction myErrorFunction( text ){\n' +
                   '\t\t//handle an error\n' +
                   '\t}\n' +
-                  '</script>';
-      code += '\t<button method-name="'+ this.name + '"\n' +
+                  '</script>\n\n';
+      code +=     '\t<button method-name="'+ this.name + '"\n' +
                   '\t\tdata-bind="click: Method"\n' + 
                   '\t\tonSuccess="mySuccessFunction" onError="myErrorFunction"\n'+
-                  '\t>' + this.name + '</button>' +
-                  '</div>';
+                  '\t>\n' +
+                  '\t' + this.name + '</button>';
       return code;
    };
 
