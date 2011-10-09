@@ -354,16 +354,16 @@ function PreviewPane( container ) {
       return markup;
    };
    
-   this.appendCode = function( id, title, contents ){
+   this.appendCode = function( id, cls, title, contents ){
 
-      var markup =      '\t\t<div class="code" id="' + id + '">';
+      var markup =      '\t\t<div class="code ' + cls + '" id="' + id + '">';
       markup +=         '\t\t<div class="title">' + title + '</div>';
       markup +=         '\t\t\t<textarea rows="10" cols="100">';
-      markup +=         contents;
       markup +=         '\t\t\t</textarea>';
       markup +=         '\t\t</div>';  //code
 
       this.jQ().append( markup );
+      this.jQ().find('#' + id + '.' + cls + ' > textarea').text( contents );
    };
 
    this.clear = function(){
@@ -507,9 +507,9 @@ function Field( name, label, className, colName, datatype, value, disabled, null
    this.show = function(){
       this.__proto__.show.call(this);
       previewpane.show();
-      previewpane.appendCode( this.name, 'JavaScript SDK: ' + this.name, this.jsSdkCode() );
-      previewpane.appendCode( this.name, 'Flex/ActionScript SDK: ' + this.name, this.flexSdkCode() );
-      previewpane.appendCode( this.name, 'Silverlight/Windows-Phone-7 SDK: ' + this.name, this.wp7SdkCode() );
+      previewpane.appendCode( this.name, 'JS', 'JavaScript SDK: ' + this.name, this.jsSdkCode() );
+      previewpane.appendCode( this.name, 'Flex', 'Flex/ActionScript SDK: ' + this.name, this.flexSdkCode() );
+      previewpane.appendCode( this.name, 'WP7', 'Silverlight/Windows-Phone-7 SDK: ' + this.name, this.wp7SdkCode() );
    };
    this.hide = function(){
       this.__proto__.hide.call(this);
@@ -559,7 +559,7 @@ function Method( name, description, returns, isDataPublication ) {
    this.jsSdkCode = function(){
 
       var code =  '<script type="text/javascript">\n' +
-                  '\tfunction mySuccessFunction(){}\n' +
+                  '\tfunction mySuccessFunction( )  {  }\n' +
                   '\tfunction myErrorFunction( text ){\n' +
                   '\t\t//handle an error\n' +
                   '\t}\n' +
@@ -588,9 +588,9 @@ function Method( name, description, returns, isDataPublication ) {
    this.show = function(){
       this.__proto__.show.call(this);
       previewpane.show();
-      previewpane.appendCode( this.name, 'JavaScript SDK: ' + this.name, this.jsSdkCode() );
-      previewpane.appendCode( this.name, 'Flex/ActionScript SDK: ' + this.name, this.flexSdkCode() );
-      previewpane.appendCode( this.name, 'Silverlight/Windows-Phone-7 SDK: ' + this.name, this.wp7SdkCode() );
+      previewpane.appendCode( this.name, 'JS', 'JavaScript SDK: ' + this.name, this.jsSdkCode() );
+      previewpane.appendCode( this.name, 'Flex', 'Flex/ActionScript SDK: ' + this.name, this.flexSdkCode() );
+      previewpane.appendCode( this.name, 'WP7', 'Silverlight/Windows-Phone-7 SDK: ' + this.name, this.wp7SdkCode() );
    };
    this.hide = function(){
       this.__proto__.hide.call(this);
