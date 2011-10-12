@@ -386,7 +386,8 @@ function PreviewPane( container ) {
 Appserver.prototype = new TreeNode();
 function Appserver( id ) {
    TreeNode.call(this);
-   this.id = id;
+   this.id = id.replace( /:/g, '_' );
+   this.rawId = id;
 
    // constructor
    this.init = function( mother ){
