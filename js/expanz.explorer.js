@@ -135,6 +135,68 @@ function parseListActivitiesForSiteResponse( nextLink, mother ){
 }
 
 
+function createModelObjectFromXML( xml, mother ){
+   var modelobject = new ModelObject(  $(xml).attr('name'),
+                                       $(xml).attr('class'),
+                                       $(xml).attr('tablename'),
+                                       $(xml).attr('relationship')
+                                       );
+   mother.append( modelobject );
+
+   $.each(  $(xml).children().filter('modelobject'),
+            function(i, childXML){
+               createModelObjectFromXML( childXML, modelobject );
+            }
+         );
+   $.each(  $(xml).children().filter('field'),
+            function(i, childXML){
+               createFieldFromXML( childXML, modelobject );
+            }
+         );
+   $.each(  $(xml).children().filter('method'),
+            function(i, childXML){
+               createMethodFromXML( childXML, modelobject );
+            }
+         );
+}
+
+function createFieldFromXML( xml, mother ){
+   var field = new Field(  $(xml).attr('name'),
+                           $(xml).attr('label') ?    $(xml).attr('label') :    '',
+                           $(xml).attr('class') ?    $(xml).attr('class') :    '',
+                           $(xml).attr('colName') ?  $(xml).attr('colName') :  '',
+                           $(xml).attr('datatype') ? $(xml).attr('datatype') : '',
+                           $(xml).attr('value') ?    $(xml).attr('value') :    '',
+                           $(xml).attr('disabled') ? $(xml).attr('disabled') : '',
+                           $(xml).attr('null') ?     $(xml).attr('null') :     '',
+                           $(xml).attr('valid') ?    $(xml).attr('valid') :    ''
+                           );
+   mother.append( field );
+
+   $.each(  $(xml).children().filter('method'),
+            function(i, childXML){
+               createMethodFromXML( childXML, field );
+            }
+         );
+}
+
+function createMethodFromXML( xml, mother ){
+   var method = new Method(   $(xml).attr('name'),
+                              $(xml).attr('description') ?    $(xml).attr('description') :    '',
+                              $(xml).attr('returns') ?    $(xml).attr('returns') :    '',
+                              $(xml).attr('isDataPublication') ?    $(xml).attr('isDataPublication') :    ''
+                              );
+   mother.append( method );
+
+   $.each(  $(xml).children().filter('parameter'),
+            function(i, childXML){
+               var parameter = new Parameter(   $(childXML).attr('name'),
+                                                $(childXML).attr('datatype') ? $(childXML).attr('datatype') : ''
+                                                );
+               method.append( parameter );
+            }
+         );
+}
 
 function parseGetSchemaForActivityResponse( mother ){
 	return function apply( xml ){
@@ -142,36 +204,24 @@ function parseGetSchemaForActivityResponse( mother ){
             var activity = $(xml).find("Activity");
 	    if( activity ){
                // NOTE: Activity has a bunch of extra fields here. $(activity).find('Activity').attr(...)
-               $(activity).find('Field').each( function(){
-                  var field = new Field(  $(this).attr('name'),
-                                          $(this).attr('label') ?    $(this).attr('label') :    '',
-                                          $(this).attr('class') ?    $(this).attr('class') :    '',
-                                          $(this).attr('colName') ?  $(this).attr('colName') :  '',
-                                          $(this).attr('datatype') ? $(this).attr('datatype') : '',
-                                          $(this).attr('value') ?    $(this).attr('value') :    '',
-                                          $(this).attr('disabled') ? $(this).attr('disabled') : '',
-                                          $(this).attr('null') ?     $(this).attr('null') :     '',
-                                          $(this).attr('valid') ?    $(this).attr('valid') :    ''
-                                          );
-                  mother.append( field );
-               });
 
-               $(activity).find('Method').each( function(){
-                  var method = new Method(   $(this).attr('name'),
-                                             $(this).attr('description') ?    $(this).attr('description') :    '',
-                                             $(this).attr('returns') ?    $(this).attr('returns') :    '',
-                                             $(this).attr('isDataPublication') ?    $(this).attr('isDataPublication') :    ''
-                                             );
-                  mother.append( method );
-
-                  $(this).find('Parameter').each( function(){
-                     var parameter = new Parameter(   $(this).attr('name'),
-                                                      $(this).attr('datatype') ? $(this).attr('datatype') : ''
-                                                      );
-                     method.append( parameter );
-                  });
-               });
-	    }
+               $.each(  $(activity).children().filter('modelobject'),
+                        function(i, childXML){
+                           createModelObjectFromXML( childXML, mother );
+                        }
+                     );
+               $.each(  $(activity).children().filter('field'),
+                        function(i, childXML){
+                           createFieldFromXML( childXML, mother );
+                        }
+                     );
+               $.each(  $(activity).children().filter('method'),
+                        function(i, childXML){
+                           createMethodFromXML( childXML, mother );
+                        }
+                     );
+                  
+	    }  // if( activity )
             else{
                // error
             }
@@ -432,9 +482,27 @@ function Activity( id, name ) {
 
    this.init = function( mother ){
       this.mother = mother;
-      this.Section = new Section( this.mother, this.id, 'activity', 'Fields' );
+      this.Section = new Section( this.mother, this.id, 'activity', this.name );    //'Fields' );
       this.Tab = new Tab( this.mother, this.id, 'activity', this.name, '(' + this.rawId + ')' );
    };
+}
+
+ModelObject.prototype = new TreeNode();
+function ModelObject( name, cls, tableName, relationship ) {
+   TreeNode.call(this);
+
+   this.name = name;
+   this.id = name.replace( /\. /g, '_' ).toLowerCase();
+   this.cls = cls;
+   this.tableName = tableName;
+   this.relationship = relationship;
+
+   this.init = function( mother ){
+      this.mother = mother;
+      this.Section = new Section( this.mother, this.id, 'modelobject', this.name );
+      this.Tab = new Tab( this.mother, this.id, 'modelobject', this.name, '(' + this.cls + ')' );
+   };
+
 }
 
 Field.prototype = new TreeNode();
@@ -645,20 +713,15 @@ function generatePairMarkup( key, value ){
 
 
 
-// [ appsite, activity, field, parameter ]
+// [ appsite, activity, [modelobject/field/method/parameter]*, details, preview pane ]
 var currentDisplay = [];
 
 function setupTabClickHandler( node ){
    node.Tab.jQ().click( function(){
-      var verticalsToDrop = currentDisplay.length;
-      
-      if( $(this).parent().hasClass('appsite') )  verticalsToDrop -= 1;
-      if( $(this).parent().hasClass('activity') )  verticalsToDrop -= 2;
-      if( $(this).parent().hasClass('field') || $(this).parent().hasClass('method') )  verticalsToDrop -= 3;
-      if( $(this).parent().hasClass('parameter') )  verticalsToDrop -= 4;
-         
-      for( i=verticalsToDrop; i>0; i-- )
-         currentDisplay.pop().hide();
+
+      if( currentDisplay.length > 0 )
+         while( currentDisplay[ currentDisplay.length-1 ].id !== node.mother.id )
+            currentDisplay.pop().hide();
 
       currentDisplay.push( node );
       node.show();
